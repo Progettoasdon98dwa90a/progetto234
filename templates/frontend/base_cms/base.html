@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+
+<!-- Inline script to set the theme immediately -->
+  <script>
+    (function() {
+      // Minimal inline function to read the cookie and set the theme
+      function getCookie(name) {
+        const cookies = document.cookie.split('; ');
+        const cookie = cookies.find(row => row.startsWith(name + '='));
+        return cookie ? cookie.split('=')[1] : null;
+      }
+
+      const savedTheme = getCookie('theme');
+      // Default to 'lemonade' if no theme cookie is found
+      const initialTheme = savedTheme || 'lemonade';
+      document.documentElement.setAttribute('data-theme', initialTheme);
+    })();
+  </script>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} {% endblock title %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+     <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- In your base template's <head> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <!-- Before closing </body> -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+
+
+</head>
+<body class="bg-base-100">
+{% include "frontend/base_cms/header.html" %}
+
+
+{% block content %}
+
+
+{% endblock content %}
+
+
+{% block custom_js %}
+
+
+{% endblock custom_js %}
+
+{% block custom_css %}
+
+{% endblock custom_css %}
+
+
+
+
+
+<script>
+
+
+
+  // Helper function to set a cookie
+  function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+  }
+
+  // Helper function to get a cookie value
+  function getCookie(name) {
+    const cookies = document.cookie.split('; ');
+    const cookie = cookies.find(row => row.startsWith(name + '='));
+    return cookie ? cookie.split('=')[1] : null;
+  }
+
+
+  // Apply theme based on cookie or default
+  document.addEventListener("DOMContentLoaded", () => {
+    const checkbox = document.querySelector('input[type="checkbox"]');
+    const savedTheme = getCookie('theme');
+
+    // Apply saved theme or default to 'lemonade'
+    const initialTheme = savedTheme || 'lemonade';
+    document.documentElement.setAttribute('data-theme', initialTheme);
+
+    // Set checkbox state based on theme
+    if (checkbox) {
+      checkbox.checked = (initialTheme === 'dark');
+    }
+
+    // Listen for checkbox changes
+    if (checkbox) {
+      checkbox.addEventListener('change', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'lemonade' : 'dark';
+
+        // Apply new theme
+        document.documentElement.setAttribute('data-theme', newTheme);
+
+        // Save new theme in a cookie
+        setCookie('theme', newTheme, 500); // Save for 30 days
+      });
+    }
+  });
+
+
+
+</script>
+
+<footer class="footer footer-center bg-base-200 text-base-content p-4">
+  <aside>
+    <p><a href="{% url 'config' %}">2025 - Gestionale 3</a></p>
+  </aside>
+</footer>
+</body>
+</html>

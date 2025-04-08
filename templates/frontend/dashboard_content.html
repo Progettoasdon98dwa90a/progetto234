@@ -1,0 +1,69 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Sales KPI -->
+    <div class="card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-gray-500">Total Sales</h3>
+        <div class="text-2xl font-bold">€ {{ sales_data.total|default:"0" }}</div>
+        <div class="chart-container mt-2">
+            <canvas id="salesChart"
+                    data-labels="{{ sales_data.dates|join:',' }}"
+                    data-values="{{ sales_data.values|join:',' }}">
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Receipts KPI -->
+    <div class="card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-gray-500">Average Receipts</h3>
+        <div class="text-2xl font-bold">{{ receipts_data.avg|default:"0" }}</div>
+        <div class="chart-container mt-2">
+            <canvas id="receiptsChart"
+                    data-labels="{{ receipts_data.dates|join:',' }}"
+                    data-values="{{ receipts_data.values|join:',' }}">
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Traffic KPI -->
+    <div class="card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-gray-500">Store Traffic</h3>
+        <div class="text-2xl font-bold">{{ traffic_data.total|default:"0" }}</div>
+        <div class="chart-container mt-2">
+            <canvas id="trafficChart"
+                    data-labels="{{ traffic_data.dates|join:',' }}"
+                    data-values="{{ traffic_data.values|join:',' }}">
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Conversion Rate KPI (Static Display) -->
+    <div class="card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-gray-500">Conversion Rate</h3>
+        <div class="text-2xl font-bold">{{ conversion_rate }}%</div>
+    </div>
+
+    <!-- Employee Performance KPI -->
+    <div class="card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-gray-500">Employee Performance</h3>
+        <div class="text-2xl font-bold">{{ employee_performance.avg|default:"0" }}</div>
+        <div class="chart-container mt-2">
+            <canvas id="employeeChart"
+                    data-labels="{{ employee_performance.labels|join:',' }}"
+                    data-values="{{ employee_performance.values|join:',' }}">
+            </canvas>
+        </div>
+    </div>
+
+    <!-- External Traffic KPI (Optional) -->
+    {% if external_traffic %}
+    <div class="card bg-white p-4 rounded-lg shadow">
+        <h3 class="text-gray-500">External Traffic</h3>
+        <div class="text-2xl font-bold">{{ external_traffic.total|default:"0" }}</div>
+        <div class="chart-container mt-2">
+            <canvas id="externalTrafficChart"
+                    data-labels="{{ external_traffic.dates|join:',' }}"
+                    data-values="{{ external_traffic.values|join:',' }}">
+            </canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>

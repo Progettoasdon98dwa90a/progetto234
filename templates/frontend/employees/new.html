@@ -1,0 +1,48 @@
+{% extends "frontend/base_cms/base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="card bg-base-100 shadow-xl p-8 m-5 max-w-lg mx-auto">
+  <h1 class="text-3xl font-bold mb-6 text-center">Nuovo Dipendente</h1>
+  <form method="POST" class="flex flex-col items-center">
+    {% csrf_token %}
+
+    <!-- First Name -->
+    <div class="form-control w-full max-w-lg mb-4">
+      <label class="label">
+        <span class="label-text text-xl">Nome</span>
+      </label>
+      {% render_field form.first_name class="input input-bordered input-lg w-full" %}
+    </div>
+
+    <!-- Last Name -->
+    <div class="form-control w-full max-w-lg mb-4">
+      <label class="label">
+        <span class="label-text text-xl">Cognome</span>
+      </label>
+      {% render_field form.last_name class="input input-bordered input-lg w-full" %}
+    </div>
+
+    <!-- Branch -->
+    <div class="form-control w-full max-w-lg mb-4">
+      <label class="label">
+        <span class="label-text text-xl">Sede</span>
+      </label>
+      {% render_field form.branch class="select select-bordered select-lg w-full" %}
+    </div>
+
+    <!-- Role -->
+    <div class="form-control w-full max-w-lg mb-4">
+      <label class="label">
+        <span class="label-text text-xl">Ruolo</span>
+      </label>
+      {% render_field form.role class="select select-bordered select-lg w-full" %}
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary btn-lg w-full max-w-lg mt-4">
+      Crea Dipendente
+    </button>
+  </form>
+</div>
+{% endblock %}

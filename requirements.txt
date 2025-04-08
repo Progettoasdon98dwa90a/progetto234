@@ -1,0 +1,12 @@
+django
+django-crispy-forms
+crispy-bootstrap4
+django-cors-headers
+djangorestframework
+openpyxl
+django-tables2
+django-filter
+crispy-tailwind
+django-widget-tweaks
+mysql-connector-python
+requests

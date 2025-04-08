@@ -1,0 +1,147 @@
+{% extends "frontend/base_cms/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}
+  Nuovo Orario
+{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto my-8 px-4">
+  <div class="card bg-base-100 shadow-xl max-w-lg mx-auto">
+    <div class="card-body">
+      <h1 class="card-title text-3xl font-bold text-center justify-center ">Nuovo Orario</h1>
+      <form method="POST" action="#" class="space-y-6">
+        {% csrf_token %}
+        <!-- Data Inizio -->
+        <div class="form-control">
+          <label for="{{ form.start_date.id_for_label }}" class="label">
+            <span class="label-text">Data Inizio</span>
+          </label>
+          {% render_field form.start_date %}
+          {% if form.start_date.errors %}
+            <span class="text-error text-sm">{{ form.start_date.errors }}</span>
+          {% endif %}
+        </div>
+        <!-- Data Fine -->
+        <div class="form-control">
+          <label for="{{ form.end_date.id_for_label }}" class="label">
+            <span class="label-text">Data Fine</span>
+          </label>
+          {% render_field form.end_date %}
+          {% if form.end_date.errors %}
+            <span class="text-error text-sm">{{ form.end_date.errors }}</span>
+          {% endif %}
+        </div>
+      <div>
+          {% if form.non_field_errors %}
+            <ul class="errorlist text-warning">
+              <li>
+                <ul class="errorlist nonfield">
+                  {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              </li>
+            </ul>
+          {% endif %}
+      </div>
+        <!-- Sede (Branch) -->
+        <div class="form-control">
+          <label for="{{ form.branch.id_for_label }}" class="label">
+            <span class="label-text">Sede</span>
+          </label>
+          {% render_field form.branch %}
+          {% if form.branch.errors %}
+            <span class="text-error text-sm">{{ form.branch.errors }}</span>
+          {% endif %}
+        </div>
+        <!-- Dipendenti (Employees) Multi Select -->
+        <div class="form-control">
+          <label for="employeeSelect" class="label">
+            <span class="label-text">Dipendenti</span>
+          </label>
+          <!-- The select is left empty; we'll populate it via JavaScript -->
+          <select id="employeeSelect" name="employees" multiple class="input input-bordered w-full">
+          </select>
+
+        </div>
+        <!-- Checkbox per "Tutti i dipendenti" -->
+        <div class="form-control">
+          <label class="cursor-pointer label">
+            <span class="label-text">{{ form.allEmployees.label }}</span>
+            {% render_field form.allEmployees %}
+          </label>
+        </div>
+        <!-- Submit Button -->
+        <div class="form-control mt-4">
+          <button type="submit" class="btn btn-primary w-full">Continua</button>
+        </div>
+      </form>
+    </div>
+  <!-- Steps aligned to the right -->
+      <ul class="steps steps-horizontal mb-5">
+        <li class="step step-primary">Variabili</li>
+        <li class="step">Configurazione</li>
+        <li class="step">Conferma</li>
+      </ul>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Initialize flatpickr for date fields.
+  flatpickr('.flatpickr', {
+    dateFormat: "Y-m-d"
+  });
+
+  // Preloaded employees mapping from the backend, passed as JSON.
+  const employeesByBranch = {{ employees_by_branch|safe }};
+
+  // Get the branch select element.
+  const branchSelect = document.getElementById("id_branch");
+  // Get the employee select element.
+  const employeeSelect = document.getElementById("employeeSelect");
+
+  // Initialize Choices.js on the employee select.
+  const employeeChoices = new Choices(employeeSelect, {
+    removeItemButton: true,
+    placeholderValue: 'Seleziona dipendenti...',
+    searchPlaceholderValue: 'Cerca dipendenti...',
+    // Allow the user to add custom entries.
+    addItems: true,
+    createItem: true, // Enables free-text entry.
+    // (Optional) Disable sorting if you want to keep the order of manual entries.
+    shouldSort: false,
+  });
+
+  // Function to update the employee select options based on branch id.
+  function updateEmployeeSelect(branchId) {
+    // Clear existing choices.
+    employeeChoices.clearChoices();
+
+    if (employeesByBranch[branchId]) {
+      // Build new choices from the preloaded mapping.
+      const newChoices = employeesByBranch[branchId].map(emp => ({
+        value: emp.id, // This is the predefined value.
+        label: `(${emp.id}) ${emp.first_name} ${emp.last_name}`
+      }));
+      // Set new choices. (The fourth parameter false prevents triggering a change event.)
+      employeeChoices.setChoices(newChoices, 'value', 'label', false);
+    }
+    // Note: This will override any manual entries if the branch selection changes.
+  }
+
+  // Update the list when the branch select changes.
+  branchSelect.addEventListener("change", function(){
+    updateEmployeeSelect(this.value);
+  });
+
+  // Initial population based on the currently selected branch.
+  updateEmployeeSelect(branchSelect.value);
+});
+</script>
+{% endblock custom_js %}
+

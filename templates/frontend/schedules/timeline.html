@@ -1,0 +1,361 @@
+{% extends "frontend/base_cms/base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+    <div class="card bg-base-300 shadow-xl p-4 m-2">
+
+  <div class="card bg-base-200 shadow-md rounded-md mb-3 p-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <!-- Header with Schedule ID -->
+        <h2 class="card-title text-2xl mb-2 sm:mb-0">
+          Modifica Orario #
+          <span class="badge badge-secondary text-lg">{{ schedule.id }}</span>
+        </h2>
+        <!-- Details: Dates and Branch -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex items-center">
+            <span class="font-bold mr-2">Dal:</span>
+            <span class="badge badge-info">{{ schedule.start_date }}</span>
+          </div>
+          <div class="flex items-center">
+            <span class="font-bold mr-2">Al:</span>
+            <span class="badge badge-info">{{ schedule.end_date }}</span>
+          </div>
+          <div class="flex items-center">
+            <span class="font-bold mr-2">Sede:</span>
+            <span class="badge badge-info">{{ schedule.branch.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div class="overflow-x-auto">
+    <table class="table table-zebra w-full border-collapse">
+      <thead>
+        <tr>
+          <th rowspan="2" class="bg-base-300 sticky left-0 z-10">
+          </th>
+          {% for day in sorted_days %}
+            <th class="bg-base-300 text-center"
+                colspan="{{ day_times_map|get_item:day|length }}">
+              {{ day }}
+            </th>
+          {% endfor %}
+        </tr>
+        <tr>
+          {% for day in sorted_days %}
+            {% for time_key in day_times_map|get_item:day %}
+              <th class="bg-base-200 text-xs text-center {% if forloop.last %}day-separator{% endif %}">
+                {{ time_key|time_display }}
+              </th>
+            {% endfor %}
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in employees %}
+          <tr>
+            <td class="sticky left-0 bg-base-300 z-10 font-semibold">
+              {{ e.name }}
+            </td>
+            {% for day in sorted_days %}
+              {% for time_key in day_times_map|get_item:day %}
+                {% with assigned_list=schedule_data|get_item:day|get_item:time_key %}
+                  {% if e.id|stringformat:"s" in assigned_list %}
+                    <td class="assignedCell text-center hover:bg-base-100 hover:cursor-pointer border border-base-200 {% if forloop.last %}day-separator{% endif %}"
+                        data-day="{{ day }}"
+                        data-time="{{ time_key }}"
+                        data-employee-id="{{ e.id }}">
+                      X
+                    </td>
+                  {% else %}
+                    <td class="text-center hover:bg-base-100 hover:cursor-pointer border border-base-200 {% if forloop.last %}day-separator{% endif %}"
+                        data-day="{{ day }}"
+                        data-time="{{ time_key }}"
+                        data-employee-id="{{ e.id }}">
+                      &nbsp;
+                    </td>
+                  {% endif %}
+                {% endwith %}
+              {% endfor %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+    <div class="card bg-base-300 shadow-xl p-4 m-2">
+        <div id="workedHoursTotal" class="my-6"></div>
+    </div>
+
+<style>
+  .assignedCell {
+    background-color: rgb(251 191 36 / 0.2); /* a mild highlight (Tailwind amber-300, ~20% alpha) */
+    position: relative;
+  }
+  .assignedCell[data-day] + .assignedCell[data-day]:not(:first-child) {
+    border-left: none;
+  }
+
+  /* Example "preview" style (when dragging over cells) */
+  .drag-select {
+    outline: 2px solid #fbbf24; /* Tailwind amber-300, for demonstration */
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const employeeNameMap = {
+    {% for e in employees %}
+      "{{ e.id }}": "{{ e.name|escapejs }}",
+    {% endfor %}
+  };
+  const scheduleId = "{{ schedule.id }}";
+  const table = document.querySelector("table");
+
+  let isDragging = false;
+  const cellMap = new Map();
+
+  // === Your existing event listeners ===
+  // MOUSE DOWN
+  table.addEventListener("mousedown", function(e) {
+    const cell = e.target.closest("td[data-day]");
+    if (!cell) return;
+    isDragging = true;
+    cellMap.clear();
+    toggleCell(cell);
+    e.preventDefault();
+  });
+
+  // MOUSE OVER
+  table.addEventListener("mouseover", function(e) {
+    if (!isDragging) return;
+    const cell = e.target.closest("td[data-day]");
+    if (!cell) return;
+    if (!cellMap.has(cell)) {
+      toggleCell(cell);
+    }
+  });
+
+  // MOUSE UP
+  document.addEventListener("mouseup", function() {
+    if (!isDragging) return;
+    isDragging = false;
+
+    const togglesPayload = [];
+    for (const [cell, info] of cellMap.entries()) {
+      togglesPayload.push({
+        day: info.day,
+        time_str: info.timeStr,
+        employee_id: parseInt(info.employeeId),
+        assign: info.finalAssigned
+      });
+    }
+    if (!togglesPayload.length) return;
+
+    fetch("{% url 'toggle_assignment_bulk' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        schedule_id: scheduleId,
+        toggles: togglesPayload
+      })
+    })
+    .then(resp => resp.json())
+    .then(data => {
+      if (!data.success) {
+        console.warn("Bulk toggle failed:", data.message);
+      }
+      // We have updated the DOM in real time. Now recalc total hours:
+      updateTotalHours();
+    })
+    .catch(err => {
+      console.error("Bulk toggle error:", err);
+    });
+  });
+
+  function toggleCell(cell) {
+    const day = cell.dataset.day;
+    const timeStr = cell.dataset.time.trim();
+    const employeeId = cell.dataset.employeeId;
+
+    // Check if currently assigned
+    const currentlyAssigned = (cell.innerText.trim() === "X");
+    const newAssigned = !currentlyAssigned;
+
+    // Update DOM
+    if (newAssigned) {
+      cell.innerText = "X";
+      cell.classList.add("assignedCell");
+    } else {
+      cell.innerHTML = "&nbsp;";
+      cell.classList.remove("assignedCell");
+    }
+
+    // Track final state in cellMap
+    cellMap.set(cell, {
+      day: day,
+      timeStr: timeStr,
+      employeeId: employeeId,
+      finalAssigned: newAssigned
+    });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // === New code to calculate + render total hours on the front end ===
+
+  // Call it immediately on page load (in case some cells are pre-assigned):
+  updateTotalHours();
+
+  // This scans all assigned cells, sums up hours by employee, and renders the result.
+  function updateTotalHours() {
+    const assignedCells = document.querySelectorAll("td.assignedCell");
+    const employeeHoursMap = {};
+
+    assignedCells.forEach(cell => {
+      const empId = cell.dataset.employeeId || "";
+      const timeStr = (cell.dataset.time || "").trim();
+
+      let hours = 0;
+      if (timeStr.includes("-")) {
+        // If we have something like "09:00-10:00", parse it
+        hours = getHoursFromRange(timeStr);
+      } else {
+        // Otherwise assume each assigned cell w/out a dash is a 1-hour block
+        hours = 0.5;
+      }
+
+      if (!employeeHoursMap[empId]) {
+        employeeHoursMap[empId] = 0;
+      }
+      employeeHoursMap[empId] += hours;
+    });
+
+    renderTotalWorkedHours(employeeHoursMap, employeeNameMap);
+  }
+
+  // Parse "HH:MM-HH:MM" (or "HH:MM:SS-HH:MM:SS") into decimal hours difference
+  function getHoursFromRange(rangeStr) {
+    const [startStr, endStr] = rangeStr.split("-");
+    const startHrs = parseTimeToDecimal(startStr);
+    const endHrs = parseTimeToDecimal(endStr);
+    const diff = endHrs - startHrs;
+    return diff > 0 ? diff : 0;
+  }
+
+  // Parse "09:00" or "09:00:00" => decimal hours (9.0 or 9.0)
+  function parseTimeToDecimal(t) {
+    if (!t) return 0;
+    const parts = t.split(":");
+    const hh = parseInt(parts[0], 10) || 0;
+    const mm = parseInt(parts[1], 10) || 0;
+    return hh + mm/60;
+  }
+
+  /**
+   * Renders the total hours table into #workedHoursTotal
+   * @param {object} employeeHoursMap - e.g. { "12": 5, "7": 3.5 }
+   */
+  function renderTotalWorkedHours(employeeHoursMap, employeeNameMap) {
+      let html = `
+        <div class="mx-auto my-6">
+          <table class="table table-zebra table-auto">
+            <thead>
+              <tr>
+                <th>Dipendente</th>
+                <th>Ore Totali</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      const empIds = Object.keys(employeeHoursMap).sort((a,b) => parseInt(a) - parseInt(b));
+
+      if (empIds.length === 0) {
+        html += `<tr><td colspan="2">No assigned cells</td></tr>`;
+      } else {
+        empIds.forEach(empId => {
+          const hours = employeeHoursMap[empId].toFixed(2);
+          const displayName = employeeNameMap[empId] || `ID#${empId}`; // fallback if not found
+          html += `
+            <tr>
+              <td><div class="badge badge-primary">${displayName}</div></td>
+              <td><div class="badge badge-primary">${hours}</div></td>
+            </tr>
+          `;
+        });
+      }
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById("workedHoursTotal").innerHTML = html;
+    }
+});
+</script>
+
+    <style>
+
+
+  .assignedCell {
+    background-color: var(--assigned-cell-color); /* a mild highlight */
+    position: relative;
+      border:none;
+
+  }
+  .assignedCell[data-day] + .assignedCell[data-day]:not(:first-child) {
+      border: none;
+  }
+
+  /* Separator style for the last cell of each day group */
+  .day-separator {
+    border-right: 2px solid #000; /* Change color and width as desired */
+  }
+
+     table {
+      border-collapse: collapse; /* Ensure borders are merged */
+    }
+
+    table th,
+    table td {
+      border: 1px solid rgba(0, 0, 0, 0.1); /* A very subtle border */
+    }
+
+    /* you already have sticky left col, but ensure it doesn't get overshadowed */
+    table tbody th,
+    table tbody td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+    }
+
+    /* Optionally reduce cell padding */
+    .table td, .table th {
+      padding: 0.25rem 0.5rem; /* smaller than default to fit more columns */
+    }
+</style>
+{% endblock content %}

@@ -1,0 +1,53 @@
+{% extends "frontend/base_cms/base.html" %}
+
+{% load render_table from django_tables2 %}
+
+{% block content %}
+<!-- EMPLOYEE TABLE -->
+<div class="card bg-base-100 shadow-xl p-4 m-5">
+    <!-- Filter form -->
+    <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-1">
+        <div>
+            {{ filter.form.branch.label_tag }}
+            {{ filter.form.branch }}
+        </div>
+        <div>
+            {{ filter.form.start_date.label_tag }}
+            {{ filter.form.start_date }}
+        </div>
+        <div>
+            {{ filter.form.end_date.label_tag }}
+            {{ filter.form.end_date }}
+        </div>
+        <div>
+            {{ filter.form.id.label_tag }}
+            {{ filter.form.id }}
+        </div>
+
+        <div >
+            <button type="submit" class="btn btn-primary"><box-icon name="filter"></box-icon>Filtra</button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href=window.location.pathname;">
+            <box-icon name="refresh"></box-icon>Reset
+        </button>
+        </div>
+    </form>
+</div>
+
+<div class="card bg-base-100 shadow-xl p-4 m-5">
+    <!-- Table -->
+    {% render_table table %}
+</div>
+{% endblock %}
+
+
+{% block custom_js %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    flatpickr('.flatpickr', {
+      dateFormat: "Y-m-d"  // Adjust as needed
+    });
+  });
+</script>
+
+{% endblock custom_js %}

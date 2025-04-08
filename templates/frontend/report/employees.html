@@ -1,0 +1,286 @@
+{% extends "frontend/base_cms/base.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+  <!-- Container for the employee tickets area chart -->
+ <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+    <div class="grid grid-cols-2 gap-4 bg-base-200 p-5 rounded-box">
+      <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+          <div class="card-header">
+            <h2 class="text-2xl font-bold mb-4">Percentuali Scontrini</h2>
+          </div>
+        <div id="scPercentageChart"></div>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+          <div class="card-header">
+            <h2 class="text-2xl font-bold mb-4">Percentuali Vendite</h2>
+          </div>
+        <div id="salesPercentageChart"></div>
+      </div>
+    </div>
+
+</div>
+
+
+
+
+ <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+        <h1 class="text-2xl text-info font-bold mb-4">Report Performance Scontrini <badge class="badge bg-base-200 badge-primary p-3 m-3 text-accent text-xl">{{ branch.name }}</badge> - Dal {{ date_start }} a {{ date_end }}</h1>
+    <div id="employeeTicketsChart"></div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+        <h1 class="text-2xl text-info font-bold mb-4">Report Performance Vendite <badge class="badge bg-base-200 badge-primary p-3 m-3 text-accent text-xl">{{ branch.name }}</badge> - Dal {{ date_start }} a {{ date_end }}</h1>
+    <div id="salesPerformanceChart"></div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+        <h1 class="text-2xl text-info font-bold mb-4">Report Tabellare <badge class="badge bg-base-200 badge-primary p-3 m-3 text-accent text-xl">{{ branch.name }}</badge> - Dal {{ date_start }} a {{ date_end }}</h1>
+        {% render_table performances_table %}
+    </div>
+
+  {# Safely output the performance data as JSON using Django's json_script filter #}
+  {{ sc_performance|json_script:"employeeTicketsData" }}
+  {{ sales_performance|json_script:"salesPerformanceData" }}
+  {{ sc_percentage|json_script:"scPercentageData" }}
+  {{ sales_percentage|json_script:"salesPercentageData" }}
+
+
+
+<script>
+  (function() {
+    // Define sales percentage data
+    var salesPercentageData = JSON.parse(document.getElementById('salesPercentageData').textContent);
+    var scPercentageData = JSON.parse(document.getElementById('scPercentageData').textContent);
+
+    // Convert data into ApexCharts format
+    var salesLabels = Object.keys(salesPercentageData);
+    var salesValues = Object.values(salesPercentageData);
+
+    var scLabels = Object.keys(scPercentageData);
+    var scValues = Object.values(scPercentageData);
+
+    // Sales Performance Donut Chart
+    var salesOptions = {
+      chart: {
+        type: "donut",
+        height: 350
+      },
+      series: salesValues,
+      labels: salesLabels,
+      colors: ["#FF4560", "#008FFB", "#FEB019", "#00E396", "#775DD0", "#546E7A"],
+      legend: {
+        position: "bottom"
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function(val) {
+          return val.toFixed(2) + "%";
+        }
+      }
+    };
+
+    // SC Performance Donut Chart
+    var scOptions = {
+      chart: {
+        type: "donut",
+        height: 350
+      },
+      series: scValues,
+      labels: scLabels,
+      colors: ["#FF4560", "#008FFB", "#FEB019", "#00E396", "#775DD0", "#546E7A"],
+      legend: {
+        position: "bottom"
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function(val) {
+          return val.toFixed(2) + "%";
+        }
+      }
+    };
+
+    // Render charts
+    var salesChart = new ApexCharts(document.querySelector("#scPercentageChart"), salesOptions);
+    salesChart.render();
+
+    var scChart = new ApexCharts(document.querySelector("#salesPercentageChart"), scOptions);
+    scChart.render();
+  })();
+</script>
+
+  <script>
+    (function(){
+      // Retrieve the performance data passed from the backend
+      var employeeTicketsData = JSON.parse(document.getElementById('employeeTicketsData').textContent);
+
+      // Get the date range values from the context (ensure these are passed as strings)
+      var dateStart = "{{ date_start }}";
+      var dateEnd = "{{ date_end }}";
+
+      // Helper function to generate an array of date strings between start and end (inclusive)
+      function getDatesBetween(start, end) {
+        var dates = [];
+        var currentDate = new Date(start);
+        var lastDate = new Date(end);
+        while (currentDate <= lastDate) {
+          var year = currentDate.getFullYear();
+          var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+          var day = ("0" + currentDate.getDate()).slice(-2);
+          dates.push(year + "-" + month + "-" + day);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
+      }
+
+      // Generate the x-axis labels based on the date range
+      var employeeTicketsDateLabels = getDatesBetween(dateStart, dateEnd);
+
+      // Build the series array for ApexCharts. Each employee becomes its own series.
+      var employeeTicketsSeries = [];
+      for (var employee in employeeTicketsData) {
+        if (employeeTicketsData.hasOwnProperty(employee)) {
+          employeeTicketsSeries.push({
+            name: employee,
+            data: employeeTicketsData[employee]
+          });
+        }
+      }
+
+      // Configure the ApexCharts area chart options using our modular names
+      var employeeTicketsOptions = {
+        chart: {
+          type: '{{ type }}',
+          height: 350
+        },
+        series: employeeTicketsSeries,
+        xaxis: {
+          categories: employeeTicketsDateLabels,
+          type: 'category',
+          labels: {
+              style: {
+                colors: 'var(--icon-color)',        // Either a single color or an array of colors
+                fontSize: '14px',
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                fontWeight: 600
+              }
+            }
+        },
+        yaxis: {
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',
+            fontSize: '12px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 400
+          }
+        }
+      },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth'
+        },
+        tooltip: {
+          x: {
+            format: 'yyyy-MM-dd'
+          }
+        }
+      };
+
+      // Instantiate and render the employee tickets chart
+      var employeeTicketsChart = new ApexCharts(document.querySelector("#employeeTicketsChart"), employeeTicketsOptions);
+      employeeTicketsChart.render();
+    })();
+  </script>
+    <script>
+    (function(){
+      // Retrieve the sales performance data passed from the backend
+      var salesPerformanceData = JSON.parse(document.getElementById('salesPerformanceData').textContent);
+
+      // Get the date range values from the Django context (as strings)
+      var startDateStr = "{{ date_start }}";
+      var endDateStr = "{{ date_end }}";
+
+      // Helper function to generate an array of dates from start to end (inclusive)
+      function getDatesBetween(start, end) {
+        var dates = [];
+        var currentDate = new Date(start);
+        var endDate = new Date(end);
+        while (currentDate <= endDate) {
+          // Format date as "YYYY-MM-DD"
+          var year = currentDate.getFullYear();
+          var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+          var day = ("0" + currentDate.getDate()).slice(-2);
+          dates.push(year + "-" + month + "-" + day);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return dates;
+      }
+
+      // Generate the x-axis date labels
+      var salesPerformanceDates = getDatesBetween(startDateStr, endDateStr);
+
+      // Build the series array: each key in salesPerformanceData becomes a separate series
+      var salesPerformanceSeries = [];
+      for (var key in salesPerformanceData) {
+        if (salesPerformanceData.hasOwnProperty(key)) {
+          salesPerformanceSeries.push({
+            name: key,
+            data: salesPerformanceData[key]
+          });
+        }
+      }
+
+      // Configure the ApexCharts area chart options
+      var salesPerformanceOptions = {
+        chart: {
+          type: '{{ type }}',
+          height: 350
+        },
+        series: salesPerformanceSeries,
+        xaxis: {
+          categories: salesPerformanceDates,
+          type: 'category',
+            labels: {
+              style: {
+                colors: 'var(--icon-color)',        // Either a single color or an array of colors
+                fontSize: '14px',
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                fontWeight: 600
+              }
+            }
+        },
+      yaxis: {
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',
+            fontSize: '12px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 400
+          }
+        }
+      },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: 'smooth'
+        },
+        tooltip: {
+          x: {
+            format: 'yyyy-MM-dd'
+          }
+        }
+      };
+
+      // Instantiate and render the chart in the designated container
+      var salesPerformanceChart = new ApexCharts(document.querySelector("#salesPerformanceChart"), salesPerformanceOptions);
+      salesPerformanceChart.render();
+    })();
+  </script>
+
+
+{% endblock %}

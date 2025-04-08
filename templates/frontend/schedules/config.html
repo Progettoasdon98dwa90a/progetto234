@@ -1,0 +1,282 @@
+{% extends "frontend/base_cms/base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}
+  Configura schedule {{ schedule.id }}
+{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto my-8 px-4">
+  <!-- Schedule Info Card -->
+    <div class="card bg-base-100 shadow-xl p-6 mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <!-- Left: Schedule Details -->
+        <div>
+          <h2 class="card-title text-2xl mb-2">
+            Modifica Orario #
+            <span class="badge badge-secondary text-lg">{{ schedule.id }}</span>
+          </h2>
+          <div class="flex flex-wrap gap-4">
+            <div class="flex items-center">
+              <span class="font-bold mr-2">Dal:</span>
+              <span class="badge badge-info">{{ schedule.start_date }}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="font-bold mr-2">Al:</span>
+              <span class="badge badge-info">{{ schedule.end_date }}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="font-bold mr-2">Sede:</span>
+              <span class="badge badge-info">{{ schedule.branch.name }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- Right: Steps -->
+        <div class="mt-4 md:mt-0">
+          <ul class="steps steps-horizontal">
+            <li class="step step-primary">Variabili</li>
+            <li class="step step-primary">Configurazione</li>
+            <li class="step">Conferma</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  <!-- Main Form (all data will be posted in one go) -->
+  <form method="POST" action="#" onsubmit="prepareFormData(event)" class="space-y-8">
+    {% csrf_token %}
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Left Column: Shift Definitions -->
+      <div>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-xl mb-4">Definisci i Turni</h3>
+            <!-- Shift Input Fields -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="form-control col-span-2">
+                <label for="shiftName" class="label">
+                  <span class="label-text">Nome Turno</span>
+                </label>
+                <input type="text" id="shiftName" placeholder="Nome" class="input input-bordered w-full" />
+              </div>
+              <div class="form-control">
+                <label for="startTime" class="label">
+                  <span class="label-text">Ora Inizio</span>
+                </label>
+                <input type="time" id="startTime" value="09:00" class="input input-bordered" />
+              </div>
+              <div class="form-control">
+                <label for="endTime" class="label">
+                  <span class="label-text">Ora Fine</span>
+                </label>
+                <input type="time" id="endTime" value="13:00" class="input input-bordered" />
+              </div>
+              <div class="form-control col-span-2">
+                <label for="minEmployees" class="label">
+                  <span class="label-text">Min. Dipendenti</span>
+                </label>
+                <input type="number" id="minEmployees" step="1" value="1" class="input input-bordered" />
+              </div>
+            </div>
+            <div class="mt-4">
+              <button type="button" onclick="addShift()" class="btn btn-success w-full">Aggiungi Turno</button>
+            </div>
+            <!-- Shift List Display -->
+            <div class="mt-6">
+              <h4 class="text-lg font-bold mb-2">Lista Turni</h4>
+              <div class="overflow-x-auto">
+                <table class="table w-full">
+                  <thead>
+                    <tr>
+                      <th>Nome Turno</th>
+                      <th>Ora Inizio</th>
+                      <th>Ora Fine</th>
+                      <th>Min. Dipendenti</th>
+                      <th>Azioni</th>
+                    </tr>
+                  </thead>
+                  <tbody id="shiftListBody">
+                    <!-- Dynamically inserted shift rows will appear here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Employees' Free Days -->
+      <div>
+        <div class="card bg-base-100 shadow-xl h-full">
+          <div class="card-body">
+            <h3 class="card-title text-xl mb-4 text-center">Giorni Liberi Dipendenti</h3>
+            <div class="overflow-x-auto">
+              <table class="table w-full">
+                <thead>
+                  <tr>
+                    <th>Dipendente</th>
+                    <th>Giorni Liberi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for emp in employees %}
+                  <tr>
+                    <td>
+                      ({{ emp.id }}) {{ emp.first_name }} {{ emp.last_name }}
+                    </td>
+                    <td>
+                      <!-- We give each input a name (ex: free_days_{{ emp.id }}) so your view can process them -->
+                      <input type="text" name="free_days_{{ emp.id }}" class="input input-bordered freeDaysInput" placeholder="Seleziona giorni" data-employee-id="{{ emp.id }}" />
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden input to hold shifts JSON (populated on submit) -->
+    <input type="hidden" name="shifts_data" id="shifts_data" />
+
+    <!-- Final Submit Button -->
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary btn-lg">Crea Bozza schedule</button>
+    </div>
+  </form>
+
+
+
+</div>
+
+<!-- JavaScript Section -->
+<script>
+// --- SHIFT MANAGEMENT --- //
+let shiftList = JSON.parse('{{ prefilled_shifts|escapejs }}');
+if (shiftList.length > 0) {
+  updateShiftList();
+}
+
+// Helper functions to work with times
+function convertToMinutes(timeStr) {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+}
+function formatTime(minutes) {
+  const hh = String(Math.floor(minutes / 60)).padStart(2, '0');
+  const mm = String(minutes % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+// Called when the user clicks "Aggiungi Turno"
+function addShift() {
+  const shiftName = document.getElementById("shiftName").value.trim();
+  const startTime = document.getElementById("startTime").value;
+  const endTime = document.getElementById("endTime").value;
+  const minEmployees = document.getElementById("minEmployees").value;
+
+  if (!shiftName) {
+    alert("Il nome del turno è obbligatorio.");
+    return;
+  }
+  const startMins = convertToMinutes(startTime);
+  const endMins = convertToMinutes(endTime);
+  if (endMins <= startMins) {
+    alert("L'ora di fine deve essere successiva all'ora di inizio.");
+    return;
+  }
+
+  // Add new shift
+  shiftList.push({
+    name: shiftName,
+    start: startMins,
+    end: endMins,
+    minEmployees: minEmployees
+  });
+  // Sort shifts by start time
+  shiftList.sort((a, b) => a.start - b.start);
+  updateShiftList();
+  // Clear fields
+  document.getElementById("shiftName").value = "";
+  document.getElementById("startTime").value = "09:00";
+  document.getElementById("endTime").value = "13:00";
+  document.getElementById("minEmployees").value = "1";
+}
+
+// Update the displayed list of shifts
+function updateShiftList() {
+  const tbody = document.getElementById("shiftListBody");
+  tbody.innerHTML = ""; // Clear existing rows
+
+  shiftList.forEach((shift, index) => {
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-base-200"; // Optional: Adds a hover effect
+
+    // Nome Turno
+    const tdName = document.createElement("td");
+    tdName.textContent = shift.name;
+    tr.appendChild(tdName);
+
+    // Ora Inizio
+    const tdStart = document.createElement("td");
+    tdStart.textContent = formatTime(shift.start);
+    tr.appendChild(tdStart);
+
+    // Ora Fine
+    const tdEnd = document.createElement("td");
+    tdEnd.textContent = formatTime(shift.end);
+    tr.appendChild(tdEnd);
+
+    // Min. Dipendenti
+    const tdMin = document.createElement("td");
+    tdMin.textContent = shift.minEmployees;
+    tr.appendChild(tdMin);
+
+    // Azioni (Remove button)
+    const tdActions = document.createElement("td");
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn btn-error btn-xs";
+    removeBtn.textContent = "Rimuovi";
+    removeBtn.onclick = function() {
+      shiftList.splice(index, 1);
+      updateShiftList();
+    };
+    tdActions.appendChild(removeBtn);
+    tr.appendChild(tdActions);
+
+    tbody.appendChild(tr);
+  });
+}
+
+// On form submission, dump shiftList into the hidden input as JSON.
+function prepareFormData(event) {
+  document.getElementById("shifts_data").value = JSON.stringify(shiftList);
+  // Let the form submit normally
+}
+
+// --- FREE DAYS: Initialize flatpickr on each free days input --- //
+document.addEventListener("DOMContentLoaded", function() {
+  // Parse the free days mapping passed from the backend
+  const freeDaysData = {{ free_days|safe }};
+
+  // For each freeDaysInput, initialize flatpickr with defaultDate based on employee id.
+  document.querySelectorAll(".freeDaysInput").forEach(function(input) {
+    const empId = input.getAttribute("data-employee-id");
+    // Look up free days for this employee (if any)
+    const defaultDates = freeDaysData[empId] || [];
+
+    flatpickr(input, {
+      mode: "multiple",
+      altInput: true,
+      altFormat: "j F, Y",
+      dateFormat: "Y-m-d",
+      minDate: "{{ schedule.start_date }}",
+      maxDate: "{{ schedule.end_date }}",
+      defaultDate: defaultDates
+    });
+  });
+});
+</script>
+{% endblock content %}

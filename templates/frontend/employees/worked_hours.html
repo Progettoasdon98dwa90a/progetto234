@@ -1,0 +1,214 @@
+{% extends "frontend/base_cms/base.html" %}
+
+{% block content %}
+<!-- Worked Hours Filter Card -->
+<div class="card w-100 bg-base-300 shadow-xl p-6 m-5" id="workedHoursFilterDropdown">
+  <div id="workedHoursDropdownContent" tabindex="0" class="card-body rounded-box bg-base-100 shadow-lg p-4 overflow-visible">
+    <h2 class="text-sm font-bold mb-2">Report Ore Lavorate (Pivot)</h2>
+    <form>
+      {% csrf_token %}
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text">Sede</span>
+        </label>
+        <select class="select select-bordered" id="workedHoursBranchFilter">
+          <option disabled selected>Seleziona Sede</option>
+          {% for branch in branches %}
+            <option value="{{ branch.id }}">{{ branch.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text">Seleziona Date</span>
+        </label>
+        <input id="workedHoursFilterdatePicker" type="text" class="input input-bordered w-full" autocomplete="off"/>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button id="workedHoursClearBtn" class="btn btn-sm btn-secondary">Clear</button>
+        <button id="workedHoursApplyBtn" class="btn btn-sm btn-primary">Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results Section (empty at first, populated by JS) -->
+<div class="m-5" id="workedHoursResults">
+  <!-- The pivoted table of results will be injected here by JavaScript -->
+</div>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+  // -------------------------
+  // WorkedHours Filter Dropdown
+  // -------------------------
+  const workedHoursDropdownContent = document.getElementById("workedHoursDropdownContent");
+  const workedHoursDropdown = document.getElementById("workedHoursFilterDropdown");
+  const workedHoursApplyBtn = document.getElementById("workedHoursApplyBtn");
+  const workedHoursClearBtn = document.getElementById("workedHoursClearBtn");
+
+  // Initialize Flatpickr for workedHours filter
+  flatpickr("#workedHoursFilterdatePicker", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    allowInput: true,
+    appendTo: workedHoursDropdownContent,
+    static: true
+  });
+
+  // Prevent workedHours dropdown from closing when clicking inside its content
+  workedHoursDropdownContent.addEventListener("click", function(event) {
+    event.stopPropagation();
+  });
+
+  // Close workedHours dropdown when clicking outside
+  document.addEventListener("click", function(event) {
+    if (!workedHoursDropdown.contains(event.target)) {
+      workedHoursDropdownContent.classList.remove("dropdown-open");
+    }
+  });
+
+  workedHoursApplyBtn.addEventListener("click", function(event) {
+    event.preventDefault(); // Prevent form submission
+    workedHoursDropdownContent.classList.remove("dropdown-open");
+    console.log("Filter applied for WorkedHours!");
+    sendWorkedHoursFilterData();
+  });
+
+  workedHoursClearBtn.addEventListener("click", function(event) {
+    event.preventDefault();
+    workedHoursDropdownContent.classList.remove("dropdown-open");
+    console.log("Filter cleared for workedHours!");
+    // Reset the workedHours filter form
+    document.getElementById("workedHoursBranchFilter").selectedIndex = 0;
+    document.getElementById("workedHoursFilterdatePicker").value = "";
+  });
+
+  function sendWorkedHoursFilterData() {
+    const selectedBranch = document.getElementById("workedHoursBranchFilter").value;
+    const date = document.getElementById("workedHoursFilterdatePicker").value;
+
+    // Show loading indicator
+    Swal.fire({
+      title: 'Attendere',
+      text: 'Generazione Report...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    fetch('{% url "worked_hours" %}', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        type: 'employees',
+        branch: selectedBranch,
+        date: date,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      Swal.close();
+      console.log("Received data:", data);
+
+      if (data.status === "success" && data.worked_hours_data) {
+        // This example expects data in pivot form:
+        // { "YYYY-MM-DD": {empId: hours, empId: hours, ...}, ... }
+        renderWorkedHoursPivotTable(data.worked_hours_data);
+      } else {
+        Swal.fire("Error", "Unexpected data structure.", "error");
+      }
+    })
+    .catch(error => {
+      Swal.close();
+      console.error("Error:", error);
+      Swal.fire("Error", "An error occurred while generating the report.", "error");
+    });
+  }
+
+  /**
+   * Render the pivoted worked hours data as a table:
+   * - One row per date
+   * - One column per employee
+   *
+   * Example data shape:
+   * {
+   *   "2025-02-01": {"1": 4.0, "2": 0, "3": 2.5},
+   *   "2025-02-02": {"1": 5.0, "2": 6.0, "3": 1.5}
+   * }
+   */
+  function renderWorkedHoursPivotTable(pivotData) {
+    try {
+      const days = Object.keys(pivotData).sort();
+      if (days.length === 0) {
+        document.getElementById("workedHoursResults").innerHTML = "<p>No data available</p>";
+        return;
+      }
+
+      // Collect a set of all employee IDs from all days
+      let allEmployees = new Set();
+      days.forEach(day => {
+        const dayObj = pivotData[day];
+        // dayObj is {employeeId: hours, ...}
+        for (let empId in dayObj) {
+          allEmployees.add(empId);
+        }
+      });
+
+      // Convert to a sorted array (if you want numeric sort, parse Int)
+      allEmployees = Array.from(allEmployees).sort((a, b) => parseInt(a) - parseInt(b));
+
+      // Build the HTML table with a scrollable container
+        let html = `
+          <div class="overflow-auto h-96">
+            <table class="table table-zebra w-full border-collapse">
+              <!-- Make the entire thead sticky -->
+              <thead class="sticky top-0 z-10 bg-base-300">
+                <tr>
+                  <th>Data</th>
+        `;
+
+      // Header columns for each employee
+      allEmployees.forEach(empId => {
+        html += `<th class="bg-base-300">${empId}</th>`;
+      });
+
+      html += `
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      // Each row = one day. Fill cells for each employee
+      days.forEach(day => {
+        html += `<tr><td>${day}</td>`;
+
+        const dayObj = pivotData[day];
+        allEmployees.forEach(empId => {
+          const hours = dayObj[empId] || 0; // fallback 0 if missing
+          html += `<td>${hours}</td>`;
+        });
+
+        html += `</tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById("workedHoursResults").innerHTML = html;
+    } catch (error) {
+      console.error("Error rendering pivot table:", error);
+      Swal.fire("Error", "An error occurred while rendering the data: " + error.message, "error");
+    }
+  }
+</script>
+{% endblock custom_js %}

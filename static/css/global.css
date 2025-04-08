@@ -1,0 +1,89 @@
+:root {
+  --icon-color: #000000; /* Default for light mode */
+  --icons-button-color: #000000;
+}
+
+[data-theme="dark"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+  --assigned-cell-color: rgb(251 191 36 / 0.4);
+
+
+}
+
+[data-theme="night"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="coffee"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="sunset"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="black"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="dracula"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="synthwave"] {
+  --icon-color: #ffffff; /* Color for dark mode */
+  --icons-button-color: #000000;
+  --assigned-cell-color: rgb(229, 120, 192);
+
+
+}
+
+[data-theme="halloween"] {
+  --icon-color: #eb6123; /* Color for dark mode */
+  --assigned-cell-color: rgb(196, 81, 31, 0.4);
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="luxury"] {
+  --icon-color: #daa44c; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+[data-theme="forest"] {
+  --icon-color: #53834a; /* Color for dark mode */
+  --icons-button-color: #000000;
+
+}
+
+
+box-icon {
+  fill: var(--icon-color);
+}
+
+button .box-icon {
+  fill: var(--icons-button-color) !important;
+}
+
+.select {
+  padding-top: 7px;
+}
+
+
+
+
+
+
+

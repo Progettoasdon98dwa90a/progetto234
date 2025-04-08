@@ -1,0 +1,246 @@
+{% extends "frontend/base_cms/base.html" %}
+
+{% load static %}
+
+{% block content %}
+    <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+      <div class="stats shadow">
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          <div class="badge p-5 m-4 bg-base-100 badge-secondary">
+            <div class="w-16 h-16">
+              {% if brand == "equivalenza" %}
+                <img src="{% static 'imgs/equivalenza_logo.png' %}" />
+              {% else %}
+                <img src="{% static 'imgs/original_logo.png' %}" />
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="stat-value align-center mt-3 vertical-align-middle">{{ branch.name }}</div>
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-title">Totale Ingressi</div>
+        <div class="stat-value text-primary">{{ ingressi_total}}</div>
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-title">Tasso di Attrazione Medio</div>
+        <div class="stat-value text-secondary">% {{ attrazione_total }}</div>
+      </div>
+
+      <div class="stat">
+
+        <div class="stat-title">Totale Traffico Esterno</div>
+        <div class="stat-value text-accent">{{ traffico_esterno_total }}</div>
+      </div>
+
+
+</div>
+    </div>
+
+
+    <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+        <h1 class="text-2xl font-bold mb-4">Report Ingressi <badge class="badge badge-primary p-5 text-2xl">{{ branch.name }}</badge> - Dal {{ date_start }} a {{ date_end }}</h1>
+        <div id="chartIngressi"></div>
+    </div>
+
+    <div class="card bg-base-200 shadow-xl p-6 m-5 text-center">
+        <h1 class="text-2xl font-bold mb-4">Report Attrazione <badge class="badge badge-primary p-5 text-2xl">{{ branch.name }}</badge> - Dal {{ date_start }} a {{ date_end }}</h1>
+        <div id="chartAttrazione"></div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl p-6 m-5 text-center">
+        <h1 class="text-2xl font-bold mb-4">Report Traffico Esterno <badge class="badge badge-primary p-5 text-2xl">{{ branch.name }}</badge> - Dal {{ date_start }} a {{ date_end }}</h1>
+        <div id="chartTrafficoEsterno"></div>
+    </div>
+
+
+  {# This will output a script tag with the JSON data in a safe way #}
+  {{ ingressi|json_script:"ingressi-data" }}
+  {{ attrazione|json_script:"attrazione-data" }}
+  {{ traffico_esterno|json_script:"traffico_esterno-data" }}
+
+  <!-- Include ApexCharts from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script>
+    // Retrieve the JSON data from the hidden script tag.
+    var chartData = JSON.parse(document.getElementById('ingressi-data').textContent);
+    console.log("chartData:", chartData);
+
+    var labels = Object.keys(chartData).sort();
+    var values = labels.map(function(date) {
+      return chartData[date];
+    });
+
+    var options = {
+      chart: {
+        type: '{{ type }}',
+        height: 350,
+        zoom: {
+          enabled: {{ zoom_enabled }}
+        },
+      },
+      series: [{
+        name: 'Report Data',
+        data: values  // your values array
+      }],
+      xaxis: {
+        categories: labels,  // your labels array (dates)
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',        // Either a single color or an array of colors
+            fontSize: '14px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 600
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',
+            fontSize: '12px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 400
+          }
+        }
+      },
+      grid: {
+        borderColor: '#e0e0e0',
+        strokeDashArray: 5
+      },
+      tooltip: {
+        theme: 'dark',
+        x: {
+          format: 'yyyy-MM-dd'
+        }
+      }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chartIngressi"), options);
+    chart.render();
+  </script>
+  <script>
+    // Retrieve the JSON data from the hidden script tag.
+    var chartData = JSON.parse(document.getElementById('attrazione-data').textContent);
+    console.log("chartData:", chartData);
+
+    var labels = Object.keys(chartData).sort();
+    var values = labels.map(function(date) {
+      return chartData[date];
+    });
+
+    var options = {
+      chart: {
+        type: '{{ type }}',
+        height: 350,
+        zoom: {
+          enabled: {{ zoom_enabled }}
+        },
+      },
+      series: [{
+        name: 'Report Data',
+        data: values  // your values array
+      }],
+      xaxis: {
+        categories: labels,  // your labels array (dates)
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',        // Either a single color or an array of colors
+            fontSize: '14px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 600
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',
+            fontSize: '12px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 400
+          }
+        }
+      },
+      grid: {
+        borderColor: '#e0e0e0',
+        strokeDashArray: 5
+      },
+      tooltip: {
+        theme: 'dark',
+        x: {
+          format: 'yyyy-MM-dd'
+        }
+      }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chartAttrazione"), options);
+    chart.render();
+  </script>
+  <script>
+    // Retrieve the JSON data from the hidden script tag.
+    var chartData = JSON.parse(document.getElementById('traffico_esterno-data').textContent);
+    console.log("chartData:", chartData);
+
+    var labels = Object.keys(chartData).sort();
+    var values = labels.map(function(date) {
+      return chartData[date];
+    });
+
+    var options = {
+      chart: {
+        type: '{{ type }}',
+        height: 350,
+        zoom: {
+          enabled: {{ zoom_enabled }}
+        },
+      },
+      series: [{
+        name: 'Report Data',
+        data: values  // your values array
+      }],
+      xaxis: {
+        categories: labels,  // your labels array (dates)
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',        // Either a single color or an array of colors
+            fontSize: '14px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 600
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: 'var(--icon-color)',
+            fontSize: '12px',
+            fontFamily: 'Helvetica, Arial, sans-serif',
+            fontWeight: 400
+          }
+        }
+      },
+      grid: {
+        borderColor: '#e0e0e0',
+        strokeDashArray: 5
+      },
+      tooltip: {
+        theme: 'dark',
+        x: {
+          format: 'yyyy-MM-dd'
+        }
+      }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chartTrafficoEsterno"), options);
+    chart.render();
+  </script>
+
+
+{% endblock %}

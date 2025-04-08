@@ -1,0 +1,230 @@
+{% extends "frontend/base_cms/base.html" %}
+{% load static %}
+
+{% block title %}Import History{% endblock %}
+
+{% block content %}
+<div class="p-6">
+
+  <div class="card bg-base-100 shadow-xl p-6 m-5">
+      <h1 class="text-2xl font-bold mb-6 text-center">Storico Imports</h1>
+
+      <form method="post" id="importForm" action="#" enctype="multipart/form-data" class="flex flex-col items-center space-y-6">
+        {% csrf_token %}
+
+        <!-- Row for the three selects -->
+        <div class="flex flex-row items-end space-x-4 w-full">
+          <!-- Branch Selector -->
+          <div class="form-control flex-1">
+            <label class="label">
+              <span class="label-text">Seleziona Sede</span>
+            </label>
+            <select class="select select-primary w-full" name="branchSelect" required>
+              <option value="" disabled selected>Seleziona Sede</option>
+              {% for branch in branches %}
+                <option value="{{ branch.id }}">{{ branch.name }}</option>
+              {% empty %}
+                <option>No Branches</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Year Selector -->
+          <div class="form-control flex-1">
+            <label class="label">
+              <span class="label-text">Seleziona Anno</span>
+            </label>
+            <select class="select select-primary w-full" name="year" required>
+              <option value="" disabled selected>Anno</option>
+              {% for year in years_list %}
+                <option value="{{ year }}">{{ year }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-full max-w-xs" >Visualizza Dati</button>
+      </form>
+    </div>
+
+
+  <!-- Heatmap Container -->
+  <div class="card bg-base-100 shadow-xl p-6 m-5">
+
+    <h1 class="text-2xl font-bold mb-4 text-center">Anno <badge class="badge badge-primary p-5 text-2xl">{{ year }}</badge></h1>
+
+    <div id="heatmapChart" style="height: 500px;"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+
+<script>
+// 1. Rebuild your raw data as a JS object from the Django context.
+//    This assumes that "imports" is passed to the template.
+const rawData = {
+  {% for day_str, val in imports.items %}
+    "{{ day_str }}": {{ val }},
+  {% endfor %}
+};
+
+// 2. Extract the year from one of the keys (all keys come from the same year)
+const firstKey = Object.keys(rawData)[0];
+const selectedYear = firstKey ? parseInt(firstKey.split('-')[0]) : new Date().getFullYear();
+
+// 3. Group the data by month.
+//    We’re using the two-digit month (e.g. "01", "02", …) as keys.
+const monthDataMap = {};
+for (const [dateStr, value] of Object.entries(rawData)) {
+    // Split the date into year, month, and day.
+    const [yearStr, monthStr, dayStr] = dateStr.split('-');
+    const day = parseInt(dayStr);
+    if (!monthDataMap[monthStr]) {
+        monthDataMap[monthStr] = {};
+    }
+    monthDataMap[monthStr][day] = value;
+}
+
+// 4. Build a series array – one object per month.
+//    For each month we create 31 data points. For days that aren’t valid
+//    in that month, we mark them with a special value (here: -2).
+const series = [];
+// Optional: a mapping for month names (feel free to use Italian names if you prefer)
+const monthNames = {
+  "01": "Gennaio", "02": "Febbraio", "03": "Marzo",
+  "04": "Aprile",   "05": "Maggio",      "06": "Giugno",
+  "07": "Luglio",    "08": "Agosto",   "09": "Settembre",
+  "10": "Ottobre", "11": "Novembre", "12": "Dicembre"
+};
+
+for (let m = 1; m <= 12; m++) {
+    const mStr = m.toString().padStart(2, '0');
+    let dataPoints = [];
+    for (let d = 1; d <= 31; d++) {
+        // Validate the date – if the month of the created date object doesn’t match,
+        // then the day is not valid for this month.
+        const testDate = new Date(selectedYear, m - 1, d);
+        if (testDate.getMonth() !== m - 1) {
+            // Mark invalid/inexistent days as -2
+            dataPoints.push({ x: d.toString(), y: -2 });
+        } else {
+            // For valid days, use the value from our mapping (should be 1, 0, or -1)
+            // (We default to 0 just in case, though your view already creates a full mapping.)
+            const dayValue = (monthDataMap[mStr] && monthDataMap[mStr][d] !== undefined)
+                               ? monthDataMap[mStr][d]
+                               : 0;
+            dataPoints.push({ x: d.toString(), y: dayValue });
+        }
+    }
+    series.push({
+        name: monthNames[mStr],
+        data: dataPoints
+    });
+}
+
+// 5. Set up your ApexCharts heatmap options.
+//    We add a new range for the -2 “invalid” value (with a neutral color).
+const options = {
+  chart: {
+    type: 'heatmap',
+    height: '100%'
+  },
+  series: series,
+  plotOptions: {
+    heatmap: {
+      colorScale: {
+        ranges: [
+          {
+            from: -2,
+            to: -2,
+            color: '#000000', // Light grey for inexistent days
+            name: 'Dati Non Validi'
+          },
+          {
+            from: -1,
+            to: -1,
+            color: '#9e9e9e',  // Gray for future days
+            name: 'Data Futura'
+          },
+          {
+            from: 0,
+            to: 0,
+            color: '#f44336',  // Red for no import
+            name: 'Nessun Dato'
+          },
+          {
+            from: 1,
+            to: 1,
+            color: '#4caf50',  // Green for import
+            name: 'Dati importati'
+          }
+        ]
+      }
+    }
+  },
+  dataLabels: {
+    enabled: false
+  },
+  xaxis: {
+    type: 'category',
+    title: {
+      text: 'Giorno'
+    },
+    labels: {
+      style: {
+        colors: '#FFFFFF',        // Either a single color or an array of colors
+        fontSize: '14px',
+        fontFamily: 'Helvetica, Arial, sans-serif',
+      }
+    }
+  },
+  yaxis: {
+    title: {
+      text: 'Mese'
+    },
+      labels: {
+      style: {
+        colors: '#FFFFFF',        // Either a single color or an array of colors
+        fontSize: '14px',
+        fontFamily: 'Helvetica, Arial, sans-serif',
+      }
+    }
+  },
+    tooltip: {
+    y: {
+      formatter: function (val) {
+        return val;
+      }
+    }
+  },
+  legend: {
+      position: 'top',
+      fontSize: '14px',
+      fontFamily: 'Helvetica, Arial, sans-serif',
+      labels: {
+        colors: 'var(--icon-color)'  // Use your CSS variable here.
+      }
+    }
+
+};
+
+// 6. Render the chart.
+const chart = new ApexCharts(document.querySelector('#heatmapChart'), options);
+chart.render();
+</script>
+
+
+
+{% endblock %}
+
+{% block custom_css %}
+    <style>
+    .apexcharts-legend-text {
+      font-size: 30px;
+      color: var(--icon-color);
+
+    }
+    </style>
+{% endblock %}
