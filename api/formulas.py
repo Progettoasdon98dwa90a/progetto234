@@ -1,7 +1,6 @@
 import importlib.resources
 import json
 from datetime import datetime, timedelta
-from pprint import pprint
 
 from api.models import Employee, Schedule, Import, Branch
 
@@ -604,10 +603,6 @@ def generate_ingressi_branch_report(branch_id, start_date, end_date):
     except Import.DoesNotExist:
         return 0
 
-    print(import_objs_qs.count())
-
-    # data = {"YYYY/MM/DD": 203, "YYYY/MM/DD": 101}
-
     data = {}
 
     for import_obj in import_objs_qs:
@@ -727,7 +722,6 @@ def get_conversion_rate_single_date(branch_id, date):
     ingressi_daily = get_number_ingressi_single_date(branch_id, date)
     scontrini_daily = get_total_scontrini_single_date(branch_id, date)
 
-    print(type(scontrini_daily))
 
     if scontrini_daily > 0 and ingressi_daily > 0:
         conversion_rate_percentual = (scontrini_daily / ingressi_daily) * 100

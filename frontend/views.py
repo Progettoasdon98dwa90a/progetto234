@@ -131,7 +131,6 @@ def dashboard(request):
         'branches_data': branches_data
     }
 
-    pprint(branches_data)
 
     # If this is an HTMX request, return only the dashboard content partial
     if request.headers.get("HX-Request") == "true":
@@ -182,7 +181,6 @@ def import_data(request):
         branch_obj = Branch.objects.get(id=selected_branch)
 
         if branch_obj.get_brand() == "equivalenza":
-
             if selected_type == "counter_data":
                 if uploaded_file:
                     # Read the file as binary
@@ -359,9 +357,6 @@ def import_data(request):
 
                         data_dict[date] = [record]
 
-                    print(data_dict)
-
-
             ### START CONVERTING DATA
             elif selected_type == "sales_data":
 
@@ -511,7 +506,6 @@ def report_branch(request):
             graph_type = "area"
 
         brand = branch.get_brand()
-        print(brand)
 
         context = {
             "sc": sc,
@@ -791,8 +785,6 @@ def report_counter(request):
         traffico_esterno = f.generate_branch_traffico_esterno_report(branch_id, date_start, date_end)
         traffico_esterno_total = sum(traffico_esterno.values())
 
-        pprint(ingressi)
-
         zoom_enabled = "false"
         graph_type = "area"
 
@@ -907,7 +899,6 @@ def config_schedule(request):
 
     elif request.method == "POST":
         form_data = request.POST
-        print(form_data)
         # Get and parse shifts data from request
         shifts_data = request.POST.get('shifts_data', '[]')  # Default to empty list if no shifts
         shifts = json.loads(shifts_data)

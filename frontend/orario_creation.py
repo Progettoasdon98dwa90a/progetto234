@@ -1,6 +1,5 @@
 import json
 from datetime import date as _date
-from pprint import pprint
 
 import mysql.connector
 import requests
@@ -485,8 +484,6 @@ def create_scheduleMP(orario_id):
                 services_data[date_key].append(data)
 
             merged_data = merge_services(services_data)
-
-            pprint(merged_data)
 
             def parse_time_to_minutes(timestr):
                 """ Convert 'HH:MM' to total minutes from midnight. E.g. '9:00' -> 540 """

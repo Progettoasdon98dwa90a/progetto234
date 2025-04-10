@@ -253,5 +253,4 @@ def get_all_schedules(request):
                     {"label": "Manage", "url": f"/manage_schedule/{schedule.id}"},
                 ]
             })
-        print(data)
         return JsonResponse(data)

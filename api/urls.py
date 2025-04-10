@@ -22,3 +22,4 @@ urlpatterns = [
     path('schedules/<int:schedule_id>', views.schedules, name='schedules' ),
     path('schedules/<int:schedule_id>/employees', views.schedules_employees, name='schedules_employees'),
 ]
+
