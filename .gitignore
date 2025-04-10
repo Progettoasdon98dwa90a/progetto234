@@ -3,4 +3,3 @@
 .idea/
 staticfiles/
 **/__pycache__/
-runlocal.py
