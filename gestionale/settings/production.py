@@ -1,3 +1,5 @@
+import os
+
 from .base import *
 
 import dj_database_url
@@ -13,10 +15,11 @@ DATABASES = {
     }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["progetto234-production.up.railway.app"]
-CORS_ALLOWED_ORIGINS = ALLOWED_HOSTS
+CORS_ALLOWED_ORIGINS = ["https://progetto234-production.up.railway.app"]
+MASTERPLAN_APP = os.getenv('MASTERPLAN_APP')
 SESSION_COOKIE_HTTPONLY = True  # ✔️ Enable for security
 SESSION_COOKIE_SAMESITE = 'Lax'  # ✔️ Add this
 SESSION_COOKIE_DOMAIN = '.progetto234-production.up.railway.app'  # ✔️ Wildcard domain

@@ -6,12 +6,16 @@ import requests
 from api.models import Schedule,Employee
 
 from pathlib import Path
+from django.conf import settings
 
 conn = None
 cursor = None
+masterplan_app=None
 
 def __init__():
-    global conn, cursor
+    global conn, cursor, masterplan_app
+
+    masterplan_app = settings.MASTERPLAN_APP
 
     # Connect to the database
     conn = mysql.connector.connect(
@@ -413,7 +417,7 @@ def merge_services(data):
     return merged_data
 
 
-def create_scheduleMP(orario_id):
+def create_scheduleMP(orario_id,):
         schedule = Schedule.objects.get(id=orario_id)
         employees = Employee.objects.filter(id__in=schedule.employees).select_related('role')
         shifts_data = schedule.shift_data
@@ -464,7 +468,7 @@ def create_scheduleMP(orario_id):
         session = requests.Session()
 
         # Step 1: Perform login
-        login_request_url = "http://localhost/frontend/login.php"
+        login_request_url = f"http://{masterplan_app}:8560/frontend/login.php"
         login_data = {
             "username": "masterplan",
             "password": "PASSWORD"
@@ -479,7 +483,7 @@ def create_scheduleMP(orario_id):
 
         # Step 2: Use the session for subsequent requests
 
-        response = session.get("http://localhost/frontend/index.php", params={
+        response = session.get(f"http://{masterplan_app}:8560/frontend/index.php", params={
             "view": "plan",
             "roster": roster_id,  # replace with actual roster_id
             "week": "",
@@ -489,7 +493,7 @@ def create_scheduleMP(orario_id):
         })
 
         # Define base URL and parameters for the next request
-        base_url = "http://localhost/frontend/index.php"
+        base_url = f"http://{masterplan_app}:8560/frontend/index.php"
         params = {
             "view": "plan",
             "roster": roster_id,  # replace with actual roster_id
