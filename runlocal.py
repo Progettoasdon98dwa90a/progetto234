@@ -19,7 +19,6 @@ def main():
     sys.path.append(str(current_directory.parent))
 
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestionale.settings.local')
-    os.environ.setdefault('DEMO_PASSWORD', 'das801n3io298ad1nulad')
     SEED_DATA = False
 
     import django
