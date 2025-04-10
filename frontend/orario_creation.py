@@ -19,7 +19,7 @@ def __init__():
 
     # Connect to the database
     conn = mysql.connector.connect(
-        host="127.0.0.1",
+        host=masterplan_app,
         user="masterplan",
         database="masterplan",
         password="PASSWORD",
