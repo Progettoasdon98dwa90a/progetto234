@@ -52,7 +52,7 @@ if __name__ == '__main__':
         print('OK USER DEMO')
     '''
 
-    call_command('seed')
+    # call_command('seed')
 
     # Get the WSGI application
     application = get_wsgi_application()
