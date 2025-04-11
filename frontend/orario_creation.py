@@ -23,8 +23,7 @@ def __init__():
         user="masterplan",
         database="masterplan",
         password="PASSWORD",
-        use_pure=True,
-        allow_local_infile=True
+
     )
 
 
