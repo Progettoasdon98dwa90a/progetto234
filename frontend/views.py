@@ -1207,3 +1207,40 @@ def worked_hours(request):
 
 
         return JsonResponse({"status": "success", "worked_hours_data": pivot_data})
+
+
+# views.py
+import socket
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+
+
+@require_http_methods(["GET"])
+def ipv6_connect_test(request):
+    ipv6_address = request.GET.get('ip', 'masterplan_codespaces.railway.internal')
+    port = int(request.GET.get('port', 3306))  # Default to MySQL port
+    timeout = 5  # seconds
+
+    try:
+        # Create IPv6 socket
+        with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((ipv6_address, port))
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Successfully connected to {ipv6_address}:{port} via IPv6'
+        })
+
+    except socket.timeout:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Connection timed out to {ipv6_address}:{port}'
+        }, status=500)
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Failed to connect to {ipv6_address}:{port}',
+            'error': str(e)
+        }, status=500)

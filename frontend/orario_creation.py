@@ -10,12 +10,11 @@ from django.conf import settings
 
 conn = None
 cursor = None
-masterplan_app=None
+masterplan_app = settings.MASTERPLAN_APP
 
 def __init__():
     global conn, cursor, masterplan_app
 
-    masterplan_app = settings.MASTERPLAN_APP
 
     # Connect to the database
     conn = mysql.connector.connect(
@@ -25,8 +24,6 @@ def __init__():
         password="PASSWORD",
 
     )
-
-
 
     cursor = conn.cursor()
 

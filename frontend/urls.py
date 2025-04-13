@@ -34,5 +34,7 @@ urlpatterns = [
     path('schedules/create/', views.create_schedule, name='create_schedule'),
     path('schedules/delete/<int:schedule_id>/', views.delete_schedule, name='delete_schedule'),
 
+    path('ipv6-test/', views.ipv6_connect_test, name='ipv6-test'),
+
     path('config/', views.config, name='config'),
 ]
