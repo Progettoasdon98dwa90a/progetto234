@@ -57,8 +57,8 @@ def dashboard(request):
 
     # Get the query string parameters
     if not date_param:
-        date_start_param = datetime.now().date() - timedelta(days=385)
-        date_end_param = datetime.now().date() - timedelta(days=355)
+        date_start_param = datetime.now().date() - timedelta(days=385) # 1 anno e 20 giorni indietro
+        date_end_param = datetime.now().date() - timedelta(days=355) # fino a 355 giorni indietro -> -(1 y - 5 gg)
 
         date_start_str = date_start_param.strftime('%Y-%m-%d')
         date_end_str = date_end_param.strftime('%Y-%m-%d')
@@ -276,6 +276,7 @@ def import_data(request):
                     import_qs = Import.objects.none()
 
                     errors = []
+                    pprint(data_dict)
 
                     for date, records in data_dict.items():
                         employees_day_id_list = []
@@ -779,7 +780,10 @@ def report_counter(request):
         branch = Branch.objects.get(id=branch_id)
 
         attrazione = f.generate_branch_tasso_attrazione_report(branch_id, date_start, date_end)
-        attrazione_total = sum(attrazione.values())  / len(attrazione)
+        try:
+            attrazione_total = sum(attrazione.values()) / len(attrazione)
+        except ZeroDivisionError:
+            attrazione_total = 0
         attrazione_total = round(attrazione_total, 2)
 
         traffico_esterno = f.generate_branch_traffico_esterno_report(branch_id, date_start, date_end)

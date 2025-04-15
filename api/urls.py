@@ -1,15 +1,14 @@
-
-from django.contrib import admin
 from django.urls import path, include
 
-from api.views.branches import get_all_branches, get_branch_employees
-from api.views.roles import get_all_roles
-from api.views.employees import get_all_employees, get_employee_data, manage_employee
-from api.views.schedules import new_schedule, get_all_schedules, schedules, schedules_employees
-from api import views
+from api.views.v1.branches import get_all_branches, get_branch_employees
+from api.views.v1.roles import get_all_roles
+from api.views.v1.employees import get_all_employees, get_employee_data, manage_employee
+from api.views.v1.schedules import new_schedule, get_all_schedules, schedules, schedules_employees
 
+from api.views.v2.employees import single_employee_data
+from api.views.v2.report_branch import get_branch_report
 
-urlpatterns = [
+old_urlpatterns = [
     # BRANCHES
     path('branches/', get_all_branches, name='get_all_branches'),
     #ROLES
@@ -26,5 +25,17 @@ urlpatterns = [
     path('schedules/all/', get_all_schedules, name='get_all_schedules'),
     path('schedules/<int:schedule_id>', schedules, name='schedules' ),
     path('schedules/<int:schedule_id>/employees', schedules_employees, name='schedules_employees'),
+
 ]
+
+
+urlpatterns = [
+    path('', include(old_urlpatterns)),
+
+    path('dipendenti/<int:branch_id>/<int:employee_id>/', single_employee_data, name='GET_EMPLOYEE_DATA'),
+    path('dipendenti/<int:branch_id>/', get_branch_employees, name='GET_BRANCH_EMPLOYEES'),
+    path('<int:branch_id>/report/branch/', get_branch_report, name='GET_BRANCH_REPORT'),
+
+]
+
 

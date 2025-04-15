@@ -33,20 +33,23 @@ def get_employee_data(request, employee_id):
     if request.method == 'GET':
         try:
             employee = Employee.objects.get(id=employee_id)
-            data = {"data": []}
-
-            employee_data = {
-                'id': employee.id,
-                'first_name': employee.first_name,
-                'last_name': employee.last_name,
-                'branch': employee.branch.id,
-                'role': employee.role.id,
-            }
-
-            data['data'].append(employee_data)
-            return JsonResponse(data)
         except Employee.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Employee not found'})
+
+        data = {"data": []}
+
+        employee_data = {
+            'id': employee.id,
+            'first_name': employee.first_name,
+            'last_name': employee.last_name,
+            'branch': employee.branch.id,
+            'role': employee.role.id,
+        }
+
+        data['data'].append(employee_data)
+        return JsonResponse(data)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
 
 @csrf_exempt
