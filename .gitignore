@@ -3,3 +3,4 @@
 .idea/
 staticfiles/
 **/__pycache__/
+/utils_files/struttura gestionale.pdf
