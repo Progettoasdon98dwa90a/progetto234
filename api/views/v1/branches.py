@@ -32,7 +32,7 @@ def get_branch_employees(request, branch_id):
                 data['data'].append({
                     'id': employee.id,
                     'class' : 0, # 0 = D, 1 = C, 2 = B, 3 = A
-                    'name': f"{employee.first_name} {employee.last_name}",
+                    'employee': f"{employee.first_name} {employee.last_name}",
                     'role' : 'Manager',
                     'contractType' : 0, # 0 Parttime, 1 Fulltime
                 })
