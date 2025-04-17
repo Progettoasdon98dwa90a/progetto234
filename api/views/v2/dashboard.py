@@ -31,7 +31,7 @@ def dashboard_data(request, branch_id):
 
         employee_object = {
             'name' : '',
-            'average_sold_pieces' : 0,
+            'averageSoldPieces' : 0,
             'mediumReceipts' : 0, # value
             'averageReceipts' : 0,
         }
@@ -39,8 +39,9 @@ def dashboard_data(request, branch_id):
         employees = Employee.objects.filter(branch_id=branch_id)
 
         for employee in employees:
+            employee_object = {}
             employee_object['name'] = employee.first_name + ' ' + employee.last_name
-            employee_object['average_sold_pieces'] = 0
+            employee_object['averageSoldPieces'] = 0
             employee_object['mediumReceipts'] = 0
             employee_object['averageReceipts'] = 0
 
