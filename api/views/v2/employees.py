@@ -14,9 +14,6 @@ def single_employee_data(request, branch_id, employee_id):
     start_date_str = start_date.strftime('%Y-%m-%d')
     end_date_str = end_date.strftime('%Y-%m-%d')
 
-
-
-
     try:
         employee_id = int(employee_id)
     except ValueError:

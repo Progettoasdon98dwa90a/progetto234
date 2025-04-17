@@ -1005,9 +1005,9 @@ def create_schedule(request):
     if request.method == "POST":
         new_schedule_pk = request.session.get('new_schedule_pk')
         schedule = Schedule.objects.get(pk=new_schedule_pk)
-        from frontend.orario_creation import create_scheduleMP
+        from frontend.orario_creation import send_schedule_data_for_creation
 
-        result = create_scheduleMP(schedule.id)
+        result = send_schedule_data_for_creation(schedule.id)
 
         if result == 0:
             return JsonResponse({"success": True, "message": "Operazione completata con successo"}, status=200)
