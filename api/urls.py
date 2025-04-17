@@ -35,7 +35,7 @@ urlpatterns = [
     path('', include(old_urlpatterns)),
 
     path('import/getHistory/<int:year>/<int:branch_id>/', getHistory, name='get_history'),
-    path('<int:branch_id>/', dashboard_data, name='dashboard_data'),
+    path('dashboard/<int:branch_id>/', dashboard_data, name='dashboard_data'),
 
     path('dipendenti/<int:branch_id>/<int:employee_id>/', single_employee_data, name='GET_EMPLOYEE_DATA'),
     path('dipendenti/<int:branch_id>/', get_branch_employees, name='GET_BRANCH_EMPLOYEES'),
