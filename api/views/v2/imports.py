@@ -60,14 +60,9 @@ def getHistory(request, year, branch_id):
         # Sort dictionary by date
         imports_report_mapped = dict(sorted(imports_report_mapped.items()))
 
-        # Rebuild years_list for re-render
-        current_year = datetime.now().year
-        years_list = range(current_year, current_year - 10, -1)
-
         context = {
             'imports': imports_report_mapped,
             'branch': branch.id,
-            'years_list': years_list,
             'year': year,
         }
 
