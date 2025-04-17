@@ -50,5 +50,4 @@ def dashboard_data(request, branch_id):
 
         pending_shifts_data = []
 
-
-        return data
+        return JsonResponse(data)
