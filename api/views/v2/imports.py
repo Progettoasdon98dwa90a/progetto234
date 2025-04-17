@@ -13,18 +13,10 @@ def getHistory(request, year, branch_id):
             branch = Branch.objects.get(id=branch_id)
         except Branch.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Branch not found'})
-        try:
-            m_year = int(year)
-        except ValueError:
-            return JsonResponse({'status': 'error', 'message': 'Invalid year'})
 
         try:
-            branch = Branch.objects.get(id=branch_id)
-        except Branch.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Branch not found'})
-
-        try:
-            m_year = int(year)
+            year = int(year)
+            year = str(year)
         except ValueError:
             return JsonResponse({'status': 'error', 'message': 'Invalid year'})
 
@@ -79,4 +71,6 @@ def getHistory(request, year, branch_id):
             'year': year,
         }
 
-        return render(request, "frontend/import/history.html", context=context)
+        return JsonResponse(context)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
