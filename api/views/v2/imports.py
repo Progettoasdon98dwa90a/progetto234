@@ -66,7 +66,7 @@ def getHistory(request, year, branch_id):
 
         context = {
             'imports': imports_report_mapped,
-            'branch': branch,
+            'branch': branch.id,
             'years_list': years_list,
             'year': year,
         }
