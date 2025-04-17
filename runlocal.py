@@ -21,7 +21,7 @@ def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestionale.settings.local')
     os.environ.setdefault('SECRET_KEY', 'django-insecure-2b7l^qo9t-8u8)5b4n0$%3b*3w0u$)g4$%z*!s%v7_1&2jx1')
 
-    SEED_DATA = False
+    SEED_DATA = True
 
     import django
     django.setup()
@@ -43,6 +43,8 @@ def main():
 
         call_command('seed')
         print("Seed data loaded successfully.")
+
+
 
     call_command('collectstatic', interactive=False)
     print("Static files collected successfully.")
