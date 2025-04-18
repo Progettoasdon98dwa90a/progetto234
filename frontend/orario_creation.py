@@ -82,7 +82,7 @@ def send_schedule_data_for_creation(orario_id,):
 
         # Define the URL for the API endpoint
 
-        url = f"http://127.0.0.1:7000/send_data/"
+        url = f"http://{masterplan_app}:7000/send_data/"
 
         # Send the POST request
         session = requests.Session()
