@@ -70,7 +70,14 @@ def new_employee(request):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
 
-        print(data)
+        dipendente_info = data.get('dipendenteInfo', {})
+        if not dipendente_info:
+            return JsonResponse({'status': 'error', 'message': 'Missing dipendenteInfo'})
+
+        contratto_dipendente = data.get('contrattoDipendente', {})
+
+        print(dipendente_info)
+        print(contratto_dipendente)
 
         return JsonResponse({'status': 'success', 'employee_id': new_employee.id})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)

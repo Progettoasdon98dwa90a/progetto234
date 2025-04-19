@@ -41,7 +41,7 @@ urlpatterns = [
     path('dipendenti/<int:branch_id>/<int:employee_id>/', single_employee_data, name='GET_EMPLOYEE_DATA'),
     path('dipendenti/<int:branch_id>/', get_branch_employees, name='GET_BRANCH_EMPLOYEES'),
     path('<int:branch_id>/report/branch/', get_branch_report, name='GET_BRANCH_REPORT'),
-    path('<int:branch_id>/create_employee/', new_employee, name='CREATE_EMPLOYEE'),
+    path('<int:branch_id>/createEmployee/', new_employee, name='CREATE_EMPLOYEE'),
 
 
 ]
