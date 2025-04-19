@@ -70,11 +70,11 @@ def new_employee(request):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
 
-        dipendente_info = data.get('dipendenteInfo', {})
+        dipendente_info = data.get('employeeInfo', {})
         if not dipendente_info:
             return JsonResponse({'status': 'error', 'message': 'Missing dipendenteInfo'})
 
-        contratto_dipendente = data.get('contrattoDipendente', {})
+        contratto_dipendente = data.get('employeeContract', {})
 
         print(dipendente_info)
         print(contratto_dipendente)
