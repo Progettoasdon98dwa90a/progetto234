@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
-from api.formulas import orario_exists
+from api.formulas.schedule import orario_exists
 from api.models import Schedule, Employee, Branch
 
 

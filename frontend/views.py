@@ -1,39 +1,31 @@
-import json
-from datetime import datetime, timedelta
 from pprint import pprint
 
-from django.utils.datastructures import MultiValueDictKeyError
-
 from django.shortcuts import render, reverse, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse, HttpRequest
 from openpyxl import load_workbook
 from io import BytesIO
 
+from api.formulas.averages import generate_medium_performance, generate_medium_sales
+from api.formulas.counter import generate_ingressi_branch_report, generate_branch_report_conversion_rate, \
+    generate_branch_tasso_attrazione_report
+from api.formulas.receipts import generate_branch_report_scontrini, generate_report_performance_scontrini
+from api.formulas.sales import generate_branch_report_sales, generate_report_performance_sales
 from api.models import Import, Schedule
+from api.formulas.counter import generate_branch_traffico_esterno_report
+
+
+from api.formulas.schedule import get_employee_worked_hours_single_day
+
 
 from api.models import Branch
-
-from api import formulas as f
-
-
-# Create your views here.
-# views.py
-from datetime import datetime, timedelta
-from django.shortcuts import render
-from api.models import Branch
-# Import your formulas functions (adjust the import path as needed)
 
 from datetime import datetime, timedelta
 import logging
 
-from django.shortcuts import render
 from django.http import HttpResponse
 
 # Set up logging (this example uses the standard library's logging)
 logger = logging.getLogger(__name__)
-
 
 def dashboard(request):
     date_param = None
@@ -95,12 +87,12 @@ def dashboard(request):
         branch_data = {}
         # --- Compute All KPI Metrics using your formulas ---
         try:
-            sales_data = f.generate_branch_report_sales(branch.id, start_date_str, end_date_str)
-            receipts_data = f.generate_branch_report_scontrini(branch.id, start_date_str, end_date_str)
-            traffic_data = f.generate_ingressi_branch_report(branch.id, start_date_str, end_date_str)
-            external_traffic = f.generate_branch_traffico_esterno_report(branch.id, start_date_str, end_date_str)
-            employee_performance = f.generate_report_performance_sales(branch.id, start_date_str, end_date_str)
-            conversion_rate = f.generate_branch_report_conversion_rate(branch.id, start_date_str, end_date_str)
+            sales_data = generate_branch_report_sales(branch.id, start_date_str, end_date_str)
+            receipts_data = generate_branch_report_scontrini(branch.id, start_date_str, end_date_str)
+            traffic_data = generate_ingressi_branch_report(branch.id, start_date_str, end_date_str)
+            external_traffic = generate_branch_traffico_esterno_report(branch.id, start_date_str, end_date_str)
+            employee_performance = generate_report_performance_sales(branch.id, start_date_str, end_date_str)
+            conversion_rate = generate_branch_report_conversion_rate(branch.id, start_date_str, end_date_str)
 
             categories = sorted(sales_data.keys(), reverse=False)
 
@@ -426,6 +418,11 @@ def import_data(request):
 
 
 
+import json
+from django.http import JsonResponse
+from django.urls import reverse, NoReverseMatch
+from urllib.parse import urlencode
+
 def filter(request):
     if request.method == "POST":
         try:
@@ -434,24 +431,56 @@ def filter(request):
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         filter_type = data.get('type')
-        branch = data.get('branch')
-        date = data.get('date')
-        print(filter_type, branch, date)  # Should now print your values
+        branch = data.get('branch') # Assuming this is the branch ID
+        date = data.get('date')     # Assuming this is the date string
 
-        redirect_url = ""
+        # Basic validation (optional but recommended)
+        if not all([filter_type, branch, date]):
+             return JsonResponse({"error": "Missing required parameters (type, branch, date)"}, status=400)
+
+        print(f"Received filter request: type={filter_type}, branch={branch}, date={date}")
+
+        url_name = None
         if filter_type == "branch":
-
-            redirect_url = "/report_branch?branch={}&date={}".format(branch, date)
-
+            # Use the name from urls.py (add app_name prefix if needed, e.g., 'reports:view_branch_report')
+            url_name = 'report_branch'
         elif filter_type == "employees":
-
-            redirect_url = "/report_employees?branch={}&date={}".format(branch, date)
-
+            url_name = 'report_employees'
         elif filter_type == "counter":
+            url_name = 'report_counter'
 
-            redirect_url = "/report_counter?branch={}&date={}".format(branch, date)
+        redirect_url = "" # Default to empty string
+
+        if url_name:
+            try:
+                # Reverse the base path using the determined name
+                base_url = reverse(url_name)
+
+                # Prepare query parameters
+                query_params = {
+                    'branch': branch,
+                    'date': date
+                }
+
+                # Encode the query parameters
+                query_string = urlencode(query_params)
+
+                # Combine base URL and query string
+                redirect_url = f"{base_url}?{query_string}"
+
+            except NoReverseMatch:
+                print(f"Error: Could not reverse URL for name '{url_name}'. "
+                      f"Please check if this name exists in your urls.py.")
+                # Keep redirect_url as "" or set a default/error URL
+                # Example: redirect_url = reverse('some_error_page')
+        else:
+            print(f"Error: Invalid filter type '{filter_type}' received.")
+            # Keep redirect_url as ""
 
         return JsonResponse({"redirect_url": redirect_url})
+
+    # Handle GET or other methods if necessary
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 def report_branch(request):
     if request.method == 'GET':
@@ -489,13 +518,13 @@ def report_branch(request):
             date_end = date.strip()
 
         # Generate the report (adjust parameters as needed)
-        sc = f.generate_branch_report_scontrini(branch_id, date_start, date_end)
+        sc = generate_branch_report_scontrini(branch_id, date_start, date_end)
         sc_total = int(sum(sc.values())) ## TOTALE SCONTRINI
 
 
         branch = Branch.objects.get(id=branch_id)
 
-        sales = f.generate_branch_report_sales(branch_id, date_start, date_end)
+        sales = generate_branch_report_sales(branch_id, date_start, date_end)
         sales_total = sum(sales.values())
         sales_total = round(sales_total, 2)
 
@@ -577,16 +606,16 @@ def report_employees(request):
 
 
 
-        sc_performance = f.generate_report_performance_scontrini(branch_id, date_start, date_end)
+        sc_performance = generate_report_performance_scontrini(branch_id, date_start, date_end)
 
-        sales_performance = f.generate_report_performance_sales(branch_id, date_start, date_end)
+        sales_performance = generate_report_performance_sales(branch_id, date_start, date_end)
 
 
-        medium_sc_sales = f.generate_medium_sc_sales(sc_performance)
+        medium_sc_sales = generate_medium_performance(sc_performance) # Use the generic average function
 
-        medium_sales_performance = f.generate_medium_sales_performance(sales_performance)
+        medium_sales_performance = generate_medium_performance(sales_performance)
 
-        medium_number_sales_performance = f.generate_medium_sales(sales_performance)
+        medium_number_sales_performance = generate_medium_sales(sales_performance)
 
         performance_table_data = []
 
@@ -774,19 +803,19 @@ def report_counter(request):
 
 
         # Generate the report (adjust parameters as needed)
-        ingressi = f.generate_ingressi_branch_report(branch_id, date_start, date_end)
+        ingressi = generate_ingressi_branch_report(branch_id, date_start, date_end)
         ingressi_total = int(sum(ingressi.values()))  ## TOTALE SCONTRINI
 
         branch = Branch.objects.get(id=branch_id)
 
-        attrazione = f.generate_branch_tasso_attrazione_report(branch_id, date_start, date_end)
+        attrazione = generate_branch_tasso_attrazione_report(branch_id, date_start, date_end)
         try:
             attrazione_total = sum(attrazione.values()) / len(attrazione)
         except ZeroDivisionError:
             attrazione_total = 0
         attrazione_total = round(attrazione_total, 2)
 
-        traffico_esterno = f.generate_branch_traffico_esterno_report(branch_id, date_start, date_end)
+        traffico_esterno = generate_branch_traffico_esterno_report(branch_id, date_start, date_end)
         traffico_esterno_total = sum(traffico_esterno.values())
 
         zoom_enabled = "false"
@@ -1179,7 +1208,7 @@ def worked_hours(request):
         for current_date in date_range:
             for employee in employees_branch:
                 w = {"employee": f"({employee.id}) {employee.first_name} {employee.last_name}",
-                     "worked_hours": f.get_employee_worked_hours_single_day(employee.id, current_date.strftime("%Y-%m-%d"))}
+                     "worked_hours": get_employee_worked_hours_single_day(employee.id, current_date.strftime("%Y-%m-%d"))}
                 worked_hours_data[current_date.strftime("%Y-%m-%d")].append(w)
 
 

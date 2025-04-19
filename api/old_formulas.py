@@ -8,6 +8,8 @@ from api.models import Employee, Schedule, Import, Branch
 def orario_exists(start_date, end_date):
     return Schedule.objects.filter(start_date=start_date, end_date=end_date).exists()
 
+
+
 ### SCONTRINI
 
 def get_scontrini_dipendente_single_date(employee_id, date):

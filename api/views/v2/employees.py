@@ -1,8 +1,12 @@
+import json
+
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 
+from django.views.decorators.csrf import csrf_exempt
+
 from api.models import Employee
-from api.formulas import get_scontrini_dipendente_date_range
+from api.formulas.receipts import get_scontrini_dipendente_date_range
 
 def single_employee_data(request, branch_id, employee_id):
     employee, branch = None, None
@@ -60,3 +64,13 @@ def single_employee_data(request, branch_id, employee_id):
     }
 
     return JsonResponse(dipendente_schema)
+
+@csrf_exempt
+def new_employee(request):
+    if request.method == 'POST':
+        data = json.loads(request.body.decode('utf-8'))
+
+        print(data)
+
+        return JsonResponse({'status': 'success', 'employee_id': new_employee.id})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
