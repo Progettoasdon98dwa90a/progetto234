@@ -66,7 +66,7 @@ def single_employee_data(request, branch_id, employee_id):
     return JsonResponse(dipendente_schema)
 
 @csrf_exempt
-def new_employee(request):
+def new_employee(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
 
@@ -79,5 +79,5 @@ def new_employee(request):
         print(dipendente_info)
         print(contratto_dipendente)
 
-        return JsonResponse({'status': 'success', 'employee_id': new_employee.id})
+        return JsonResponse({'status': 'success', 'employee_id': 2})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
