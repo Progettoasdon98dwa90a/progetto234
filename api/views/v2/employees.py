@@ -87,8 +87,8 @@ def new_employee(request, branch_id):
         )
         new_employee_obj.save()
 
-        all_employees = Employee.objects.filter(branch_id=branch_id).values('id', 'branch__name', 'first_name', 'last_name')
-
-
+        all_employees = list(
+            Employee.objects.filter(branch_id=branch_id).values('id', 'branch__name', 'first_name', 'last_name')
+        )
         return JsonResponse({'status': 'success', 'employee_id': 2, 'all_employees': all_employees})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
