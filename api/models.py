@@ -24,7 +24,7 @@ class Branch(models.Model):
 class Employee(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    gender = models.CharField(max_length=10, default="F")
+    genre = models.CharField(max_length=10, default="F")
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     role = models.IntegerField(default=0)
     birth_date = models.CharField(default="", max_length=100)
