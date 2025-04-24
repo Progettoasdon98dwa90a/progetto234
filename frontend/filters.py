@@ -1,5 +1,5 @@
 import django_filters
-from api.models import Employee, Branch, Role
+from api.models import Employee, Branch
 from django import forms
 from django.db.models import Q
 

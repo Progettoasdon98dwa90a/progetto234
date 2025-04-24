@@ -3,7 +3,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from api.models import Employee, Role, Branch
+from api.models import Employee, Branch
 
 
 def get_all_employees(request):

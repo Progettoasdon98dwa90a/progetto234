@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 from django.core.management import call_command
 
 
-from api.models import Employee, Role, Branch, Import
+from api.models import Employee,Branch, Import
 
 current_directory = Path(__file__).resolve().parent.parent.parent.parent
 
@@ -77,17 +77,13 @@ class Command(BaseCommand):
                 },
             }
 
-        for role, role_data in roles_data.items():
-            role_obj = Role.objects.create(**role_data)
-
-            print(f"Role '{role}' created successfully.")
 
         employees_data = [{
                     'id': 1,
                     'first_name': 'Elisa',
                     'last_name': "1",
                     'branch': branch_obj,
-                    'role': Role.objects.get(id=1),  # Assuming you have a Role model
+                    'role': 0,  # Assuming you have a Role model
                     
                 },
                 {
@@ -95,7 +91,7 @@ class Command(BaseCommand):
                     'first_name': 'Vanessa',
                     'last_name': "1",
                     'branch': branch_obj,
-                    'role': Role.objects.get(id=1),  # Assuming you have a Role model
+                    'role': 0,  # Assuming you have a Role model
                     
                 },
                 {
@@ -103,7 +99,7 @@ class Command(BaseCommand):
                     'first_name': 'Vanessa',
                     'last_name': "Brocca",
                     'branch': branch_obj,
-                    'role': Role.objects.get(id=1),  # Assuming you have a Role model
+                    'role': 1,  # Assuming you have a Role model
                     
                 },
                 {
@@ -111,7 +107,7 @@ class Command(BaseCommand):
                     'first_name': 'Venditore',
                     'last_name': "Christmas",
                     'branch': branch_obj,
-                    'role': Role.objects.get(id=1),  # Assuming you have a Role model
+                    'role': 1,  # Assuming you have a Role model
                     
                 },
 

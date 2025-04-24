@@ -1,7 +1,6 @@
 from django.urls import path, include
 
 from api.views.v1.branches import get_all_branches, get_branch_employees
-from api.views.v1.roles import get_all_roles
 from api.views.v1.employees import get_all_employees, get_employee_data, manage_employee
 from api.views.v1.schedules import new_schedule, get_all_schedules, schedules, schedules_employees
 
