@@ -34,32 +34,32 @@ def single_employee_data(request, branch_id, employee_id):
             "name": employee.first_name,
             "surname": employee.last_name,
             "genre": employee.format_gender(),  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
-            "birthDate": "",
-            "telNumber": "",
-            "email": ""
+            "birthDate": employee.birth_date,
+            "telNumber": employee.phone_number,
+            "email": employee.email,
         },
-        "contrattoDipendente": {
-            "role": "",
-            "class": "",
+        "employeeContract": {
+            "role": employee.role,
+            "class": employee.skill_class,
             "branch": branch_id,  # ID numerico della sede
-            "contract": "",  # Valori possibili da TipoContratto (non specificato nell'originale)
+            "contract": employee.contract_type,  # Valori possibili da TipoContratto (non specificato nell'originale)
             "monthlyHour": employee.role.max_hours_per_month,
-            "hourlyCost": "",
-            "contractStart": None,
-            "contractEnd": None
+            "hourlyCost": employee.hourly_cost,
+            "contractStart": employee.contract_start,
+            "contractEnd": employee.contract_end,
         },
-        "giornoDIRiposo": "",  # Valori possibili: "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"
-        "ferie": [],  # Array di oggetti Ferie (struttura non specificata nell'originale)
-        "oreLavorate": {
-            "oreLavorate": "",
-            "oreTotal": ""
+        "restDays": "",  # Valori possibili: "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"
+        "holydays": [],  # Array di oggetti Ferie (struttura non specificata nell'originale)
+        "workedHours": {
+            "worked": "",
+            "total": ""
         }, # capire se fare fallback su ultimi 30 gg
-        "vendite": {
-            "scontrinoMedio": get_scontrini_dipendente_date_range(employee_id, start_date_str, end_date_str),  # Oggetto Metrica non definito nell'originale
-            "mediaScontrini": {},
-            "mediaPrezziScontrini": {},
-            "dataInizio": None,
-            "dataFine": None
+        "salesData": {
+            "mediumReceiptValue": get_scontrini_dipendente_date_range(employee_id, start_date_str, end_date_str),  # Oggetto Metrica non definito nell'originale
+            "mediumReceiptCount": {},
+            "mediumPiecesReceipt": {},
+            "startDate": None,
+            "endDate": None
         }
     }
 
