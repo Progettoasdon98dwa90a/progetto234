@@ -43,7 +43,7 @@ def single_employee_data(request, branch_id, employee_id):
             "class": employee.skill_class,
             "branch": branch_id,  # ID numerico della sede
             "contract": employee.contract_type,  # Valori possibili da TipoContratto (non specificato nell'originale)
-            "monthlyHour": employee.role.max_hours_per_month,
+            "monthlyHour": employee.max_hours_per_month,
             "hourlyCost": employee.hourly_cost,
             "contractStart": employee.contract_start,
             "contractEnd": employee.contract_end,

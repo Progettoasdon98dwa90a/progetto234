@@ -34,6 +34,10 @@ class Employee(models.Model):
     contract_type = models.IntegerField(default=0)  # 0 = Part-time, 1 = Full-time
     contract_start = models.CharField(default="", max_length=100)
     contract_end = models.CharField(default="", max_length=100)
+    max_hours_per_month = models.IntegerField(default=0)
+    max_hours_per_week = models.IntegerField(default=0)
+    max_hours_per_day = models.IntegerField(default=0)
+    max_hours_per_shift = models.IntegerField(default=0)
     hourly_cost = models.FloatField(default=0.0)
 
     extra_data = models.JSONField(default=dict)
