@@ -39,6 +39,13 @@ class Employee(models.Model):
     gender = models.CharField(max_length=10, default="F")
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, default=1)
+    birth_date = models.CharField(default="", max_length=100)
+    phone_number = models.CharField(default="", max_length=100)
+    email = models.CharField(default="", max_length=100)
+    skill_class = models.IntegerField(default=0)  # 0 = D, 1 = C, 2 = B, 3 = A
+    contract_type = models.IntegerField(default=0)  # 0 = Part-time, 1 = Full-time
+    contract_start = models.CharField(default="", max_length=100)
+    contract_end = models.CharField(default="", max_length=100)
     extra_data = models.JSONField(default=dict)
 
     def __str__(self):

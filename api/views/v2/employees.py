@@ -69,8 +69,23 @@ def single_employee_data(request, branch_id, employee_id):
 def new_employee(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
-        print(data)
-
+        employee_info = data.get('employeeInfo', {})
+        new_employee_obj = Employee.objects.create(
+            first_name=employee_info.get('name'),
+            last_name=employee_info.get('surname'),
+            branch_id=branch_id,
+            genre=employee_info.get('genre'),  # Assuming genre is a field in Employee
+            role=employee_info.get('role'),
+            skill_class=employee_info.get('class'),  # Assuming class is a field in Employee
+            contract_type=employee_info.get('contract'),  # Assuming contract is a field in Employee
+            contract_start=employee_info.get('contractStart'),
+            contract_end=employee_info.get('contractEnd'),
+            phone_number=employee_info.get('telNumber'),
+            email=employee_info.get('email'),
+            birth_date=employee_info.get('birthDate'),
+            # Add other fields as necessary
+        )
+        new_employee_obj.save()
 
         all_employees = Employee.objects.all().values('id', 'branch__name', 'first_name', 'last_name', flat=True)
 
