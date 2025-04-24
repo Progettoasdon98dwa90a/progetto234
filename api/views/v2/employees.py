@@ -30,23 +30,23 @@ def single_employee_data(request, branch_id, employee_id):
 
     dipendente_schema = {
         "id": employee.id,
-        "dipendenteInfo": {
-            "nome": employee.first_name,
-            "cognome": employee.last_name,
-            "genere": employee.format_gender(),  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
-            "dataNascita": "DEFINIRE FORMATO E TIMEZONE",
-            "telefono": "AGGIUNGERE",
-            "email": "AGGIUNGERE"
+        "employeeInfo": {
+            "name": employee.first_name,
+            "surname": employee.last_name,
+            "gender": employee.format_gender(),  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
+            "birthDate": "",
+            "telNumber": "",
+            "email": ""
         },
         "contrattoDipendente": {
-            "ruolo": "",
-            "classe": "",
-            "sede": branch_id,  # ID numerico della sede
-            "contratto": "",  # Valori possibili da TipoContratto (non specificato nell'originale)
-            "oreMensili": employee.role.max_hours_per_month,
-            "costoOrario": "",
-            "inizioContratto": None,
-            "fineContratto": None
+            "role": "",
+            "class": "",
+            "branch": branch_id,  # ID numerico della sede
+            "contract": "",  # Valori possibili da TipoContratto (non specificato nell'originale)
+            "monthlyHour": employee.role.max_hours_per_month,
+            "hourlyCost": "",
+            "contractStart": None,
+            "contractEnd": None
         },
         "giornoDIRiposo": "",  # Valori possibili: "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"
         "ferie": [],  # Array di oggetti Ferie (struttura non specificata nell'originale)
@@ -69,15 +69,10 @@ def single_employee_data(request, branch_id, employee_id):
 def new_employee(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
+        print(data)
 
-        dipendente_info = data.get('employeeInfo', {})
-        if not dipendente_info:
-            return JsonResponse({'status': 'error', 'message': 'Missing dipendenteInfo'})
 
-        contratto_dipendente = data.get('employeeContract', {})
+        all_employees = Employee.objects.all().values('id', 'branch__name', 'first_name', 'last_name')
 
-        print(dipendente_info)
-        print(contratto_dipendente)
-
-        return JsonResponse({'status': 'success', 'employee_id': 2})
+        return JsonResponse({'status': 'success', 'employee_id': 2, 'all_employees': all_employees})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)

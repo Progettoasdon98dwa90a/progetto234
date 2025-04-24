@@ -13,9 +13,7 @@ from api.views.v2.dashboard import dashboard_data
 
 old_urlpatterns = [
     # BRANCHES
-    path('branches/', get_all_branches, name='get_all_branches'),
     #ROLES
-    path('roles/', get_all_roles, name='get_all_roles'),
 
     # EMPLOYEES
     path('all_employees/', get_all_employees, name='get_all_employees'),
@@ -33,7 +31,7 @@ old_urlpatterns = [
 
 
 urlpatterns = [
-    path('', include(old_urlpatterns)),
+    path('branches/', get_all_branches, name='get_all_branches'),
 
     path('import/getHistory/<int:year>/<int:branch_id>/', getHistory, name='get_history'),
     path('dashboard/<int:branch_id>/', dashboard_data, name='dashboard_data'),
