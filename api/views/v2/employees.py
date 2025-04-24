@@ -48,7 +48,7 @@ def single_employee_data(request, branch_id, employee_id):
             "contractStart": employee.contract_start,
             "contractEnd": employee.contract_end,
         },
-        "restDays": "",  # Valori possibili: "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"
+        "restDays": [0,1],  # Valori possibili: 0= Lunedi, 1=Martedi, 2=Mercoledi, 3=Giovedi, 4=Venerdi, 5=Sabato, 6=Domenica
         "holydays": [],  # Array di oggetti Ferie (struttura non specificata nell'originale)
         "workedHours": {
             "worked": "",
@@ -64,6 +64,10 @@ def single_employee_data(request, branch_id, employee_id):
     }
 
     return JsonResponse(dipendente_schema)
+
+
+
+
 
 @csrf_exempt
 def new_employee(request, branch_id):
