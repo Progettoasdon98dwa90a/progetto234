@@ -23,16 +23,7 @@ class EmployeeFilter(django_filters.FilterSet):
             'placeholder': "Tutte"
         })
     )
-    role = django_filters.ModelChoiceFilter(
-        queryset=Role.objects.all(),
-        empty_label="Tutti",  # Translatable empty label
-        label="Ruolo",
-        widget=forms.Select(attrs={
-            "class": "select select-bordered",
-            'placeholder': "Tutti"
 
-        })
-    )
 
     class Meta:
         model = Employee

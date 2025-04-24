@@ -13,7 +13,7 @@ def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestionale.settings.local')
     os.environ.setdefault('SECRET_KEY', 'django-insecure-2b7l^qo9t-8u8)5b4n0$%3b*3w0u$)g4$%z*!s%v7_1&2jx1')
 
-    SEED_DATA = True
+    SEED_DATA = False
 
     import django
     django.setup()
