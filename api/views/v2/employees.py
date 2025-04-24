@@ -33,7 +33,7 @@ def single_employee_data(request, branch_id, employee_id):
         "employeeInfo": {
             "name": employee.first_name,
             "surname": employee.last_name,
-            "gender": employee.format_gender(),  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
+            "genre": employee.format_gender(),  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
             "birthDate": "",
             "telNumber": "",
             "email": ""
