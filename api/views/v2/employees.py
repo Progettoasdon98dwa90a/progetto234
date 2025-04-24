@@ -72,7 +72,7 @@ def new_employee(request, branch_id):
         print(data)
 
 
-        all_employees = Employee.objects.all().values('id', 'branch__name', 'first_name', 'last_name')
+        all_employees = Employee.objects.all().values('id', 'branch__name', 'first_name', 'last_name', flat=True)
 
         return JsonResponse({'status': 'success', 'employee_id': 2, 'all_employees': all_employees})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
