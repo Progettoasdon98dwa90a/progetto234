@@ -77,8 +77,10 @@ def getHistory(request, year, branch_id):
 def uploadImportData(request):
     if request.method == 'POST':
         uploaded_file = request.FILES.get('file')
-        selected_branch = request.POST.get('branchSelect')
+        selected_branch = request.POST.get('branchId')
         selected_type = request.POST.get('typeSelect')
+
+        print(selected_branch, selected_type)
 
         # 0 = sales_data, 1 = counter_data
         if selected_type == 0:
