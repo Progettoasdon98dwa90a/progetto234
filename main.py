@@ -28,6 +28,9 @@ if __name__ == '__main__':
     # Flush the database
     call_command('flush', interactive=False)  # Flush the database
     print("OK FLUSH")
+    # Apply migrations
+    call_command('makemigrations', interactive=False)  # Apply migrations
+    call_command('makemigrations', 'api', interactive=False)  # Apply migrations
     # Run Django migrations
     call_command('migrate')
     print("OK MIGRATION")
