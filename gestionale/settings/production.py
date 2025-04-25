@@ -40,3 +40,18 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 QR_DOMAIN_NAME= 'https://progetto234-production.up.railway.app'
 MEDIA_URL = ''
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}

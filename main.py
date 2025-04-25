@@ -25,6 +25,7 @@ if __name__ == '__main__':
     # Set the Django settings module
     django.setup()
 
+    call_command('makemigrations')
     # Run Django migrations
     call_command('migrate')
     print("OK MIGRATION")
