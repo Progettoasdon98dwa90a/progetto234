@@ -31,6 +31,8 @@ if __name__ == '__main__':
     print("OK MIGRATION")
     call_command('collectstatic', interactive=False)
     print("OK CLLSTC")
+    # Flush the database
+    call_command('flush', interactive=False)  # Flush the database
     '''
     from django.contrib.auth.models import User
 
