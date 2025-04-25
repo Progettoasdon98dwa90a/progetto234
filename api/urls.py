@@ -5,6 +5,7 @@ from api.views.v1.employees import get_all_employees, get_employee_data, manage_
 from api.views.v1.schedules import new_schedule, get_all_schedules, schedules, schedules_employees
 
 from api.views.v2.employees import single_employee_data
+from api.views.v2.employees import set_employee_rest_days
 from api.views.v2.employees import new_employee
 from api.views.v2.employees import update_employee
 from api.views.v2.report_branch import get_branch_report
