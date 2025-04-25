@@ -80,7 +80,8 @@ def uploadImportData(request):
         selected_branch = request.POST.get('branchId')
         selected_type = request.POST.get('typeSelect')
 
-        print(selected_branch, selected_type)
+        print(type(selected_branch), type(selected_type))
+        print()
 
         # 0 = sales_data, 1 = counter_data
         if selected_type == 0:
