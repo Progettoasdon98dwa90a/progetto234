@@ -26,36 +26,19 @@ if __name__ == '__main__':
     django.setup()
 
     call_command('makemigrations')
+    call_command('makemigrations', 'api', interactive=False)  # Apply migrations
     # Run Django migrations
     call_command('migrate')
     print("OK MIGRATION")
-    call_command('collectstatic', interactive=False)
-    print("OK CLLSTC")
     # Flush the database
     call_command('flush', interactive=False)  # Flush the database
-    '''
-    from django.contrib.auth.models import User
-
-    if not User.objects.filter(username='userdemo').exists():
-        u = User.objects.create_user(username='userdemo',
-                    password=os.getenv('DEMO_PASSWORD'),
-                    first_name='Demo',
-                    last_name='User',)
-        u.save()
-        print('OK USER DEMO')
-    else:
-        # delete the user if it exists
-        User.objects.filter(username='userdemo').delete()
-
-        u = User.objects.create_user(username='userdemo',
-                    password=os.getenv('DEMO_PASSWORD'),
-                    first_name='Demo',
-                    last_name='User',)
-        u.save()
-        print('OK USER DEMO')
-    '''
-
+    print("OK FLUSH")
+    # Load initial data
     call_command('seed')
+    print("OK SEED")
+    call_command('collectstatic', interactive=False)
+    print("OK CLLSTC")
+
 
     # Get the WSGI application
     application = get_wsgi_application()
