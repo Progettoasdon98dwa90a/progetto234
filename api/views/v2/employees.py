@@ -91,7 +91,7 @@ def new_employee(request, branch_id):
         all_employees = list(
             Employee.objects.filter(branch_id=branch_id).values('id', 'branch__name', 'first_name', 'last_name')
         )
-        return JsonResponse({'status': 'success', 'employee_id': 2, 'all_employees': all_employees})
+        return JsonResponse({'status': 'success', 'employee_id': 2, 'all_employees': all_employees}, status=200)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
 
@@ -119,7 +119,7 @@ def update_employee(request, branch_id, employee_id):
             # Add other fields as necessary
             employee.save()
 
-            return JsonResponse({'status': 'success', 'message': 'Employee updated successfully'})
+            return JsonResponse({'status': 'success', 'message': 'Employee updated successfully'}, status=200)
         except Employee.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
     return None
@@ -128,5 +128,10 @@ def update_employee(request, branch_id, employee_id):
 def set_employee_rest_days(request, branch_id, employee_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
-        print(data)
-        return JsonResponse({'status': 'success', 'message': 'Employee updated successfully'})
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            employee.rest_days = data.get('restDays')
+            employee.save()
+        except Employee.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
+        return JsonResponse({'status': 'success', 'message': 'Employee updated successfully'}, status=200)

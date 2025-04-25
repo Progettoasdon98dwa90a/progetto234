@@ -38,6 +38,7 @@ class Employee(models.Model):
     max_hours_per_week = models.IntegerField(default=0)
     max_hours_per_day = models.IntegerField(default=0)
     max_hours_per_shift = models.IntegerField(default=0)
+    rest_days = models.JSONField(default=list, blank=True)
 
     hourly_cost = models.FloatField(default=0.0)
 
