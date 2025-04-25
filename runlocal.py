@@ -22,11 +22,11 @@ def main():
 
 
     if SEED_DATA:
+        call_command('flush', interactive=False)
         call_command('makemigrations', 'api', interactive=False)  # Apply migrations
         call_command('migrate')  # Apply migrations
         print("Migrations applied successfully.")
         # Flush the database
-        call_command('flush', interactive=False)
 
         call_command('seed')
         print("Seed data loaded successfully.")

@@ -16,8 +16,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # create first two branches
-        call_command('flush', interactive=False)  # Flush the database
-        
 
         branch_data = [
                 {'name': 'Biella', 'extra_data': {'brand' : 'equivalenza'}},
