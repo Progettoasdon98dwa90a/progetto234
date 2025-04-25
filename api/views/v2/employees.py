@@ -124,7 +124,7 @@ def update_employee(request, branch_id, employee_id):
             return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
     return None
 
-
+@csrf_exempt
 def set_employee_rest_days(request, branch_id, employee_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
