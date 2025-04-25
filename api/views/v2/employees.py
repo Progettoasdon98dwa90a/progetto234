@@ -128,9 +128,10 @@ def update_employee(request, branch_id, employee_id):
 def set_employee_rest_days(request, branch_id, employee_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
+        print(data)
         try:
             employee = Employee.objects.get(id=employee_id)
-            employee.rest_days = data.get('restDays')
+            employee.rest_days = data
             employee.save()
         except Employee.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
