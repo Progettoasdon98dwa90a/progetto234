@@ -104,6 +104,7 @@ def update_employee(request, branch_id, employee_id):
             employee = Employee.objects.get(id=employee_id)
             employee.first_name = employee_info.get('name')
             employee.last_name = employee_info.get('surname')
+            employee.branch_id = branch_id  # Assuming branch_id is passed in the request
             employee.genre = employee_info.get('genre')
             employee.role = employee_info.get('role')
             employee.skill_class = employee_info.get('class')
