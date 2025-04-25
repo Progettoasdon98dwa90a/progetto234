@@ -66,9 +66,6 @@ def single_employee_data(request, branch_id, employee_id):
     return JsonResponse(dipendente_schema)
 
 
-
-
-
 @csrf_exempt
 def new_employee(request, branch_id):
     if request.method == 'POST':
@@ -96,3 +93,30 @@ def new_employee(request, branch_id):
         )
         return JsonResponse({'status': 'success', 'employee_id': 2, 'all_employees': all_employees})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+
+@csrf_exempt
+def update_employee(request, branch_id, employee_id):
+    if request.method == 'POST':
+        data = json.loads(request.body.decode('utf-8'))
+        employee_info = data.get('employeeInfo', {})
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            employee.first_name = employee_info.get('name')
+            employee.last_name = employee_info.get('surname')
+            employee.genre = employee_info.get('genre')
+            employee.role = employee_info.get('role')
+            employee.skill_class = employee_info.get('class')
+            employee.contract_type = employee_info.get('contract')
+            employee.contract_start = employee_info.get('contractStart')
+            employee.contract_end = employee_info.get('contractEnd')
+            employee.phone_number = employee_info.get('telNumber')
+            employee.email = employee_info.get('email')
+            employee.birth_date = employee_info.get('birthDate')
+            # Add other fields as necessary
+            employee.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Employee updated successfully'})
+        except Employee.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
+    return None

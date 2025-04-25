@@ -6,6 +6,7 @@ from api.views.v1.schedules import new_schedule, get_all_schedules, schedules, s
 
 from api.views.v2.employees import single_employee_data
 from api.views.v2.employees import new_employee
+from api.views.v2.employees import update_employee
 from api.views.v2.report_branch import get_branch_report
 from api.views.v2.imports import getHistory
 from api.views.v2.dashboard import dashboard_data
@@ -38,7 +39,7 @@ urlpatterns = [
     path('dipendenti/<int:branch_id>/<int:employee_id>/', single_employee_data, name='GET_EMPLOYEE_DATA'),
     path('dipendenti/<int:branch_id>/', get_branch_employees, name='GET_BRANCH_EMPLOYEES'),
     path('dipendenti/<int:branch_id>/createEmployee/', new_employee, name='CREATE_EMPLOYEE'),
-
+    path('dipendenti/<int:branch_id>/updateEmployee/<int:employee_id>/', update_employee, name='UPDATE_EMPLOYEE'),
     path('<int:branch_id>/report/branch/', get_branch_report, name='GET_BRANCH_REPORT'),
 
 
