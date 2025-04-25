@@ -69,3 +69,13 @@ def getHistory(request, year, branch_id):
         return JsonResponse(context)
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+def uploadImportData(request):
+    if request.method == 'POST':
+        uploaded_file = request.FILES['file']
+        branch_id = request.POST.get('branch_id', -1)
+        print(uploaded_file, branch_id)
+
+        return JsonResponse({'status': 'success', 'message': 'File uploaded successfully'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
