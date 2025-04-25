@@ -25,12 +25,12 @@ if __name__ == '__main__':
     # Set the Django settings module
     django.setup()
 
-    # Run Django migrations
-    call_command('migrate')
-    print("OK MIGRATION")
     # Flush the database
     call_command('flush', interactive=False)  # Flush the database
     print("OK FLUSH")
+    # Run Django migrations
+    call_command('migrate')
+    print("OK MIGRATION")
     # Load initial data
     call_command('seed')
     print("OK SEED")
