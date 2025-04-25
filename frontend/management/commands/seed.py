@@ -10,9 +10,6 @@ from api.models import Employee,Branch, Import
 
 current_directory = Path(__file__).resolve().parent.parent.parent.parent
 
-print(current_directory)
-
-
 
 class Command(BaseCommand):
     help = "Assigns all weapons to users, without duplicates, until finished"

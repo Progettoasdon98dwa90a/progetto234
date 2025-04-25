@@ -14,3 +14,17 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 MASTERPLAN_APP = 'localhost'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
