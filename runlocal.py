@@ -13,7 +13,7 @@ def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestionale.settings.local')
     os.environ.setdefault('SECRET_KEY', 'django-insecure-2b7l^qo9t-8u8)5b4n0$%3b*3w0u$)g4$%z*!s%v7_1&2jx1')
 
-    SEED_DATA = False
+    SEED_DATA = True
 
     import django
     django.setup()
@@ -39,7 +39,7 @@ def main():
 
 
     # Run the Django development server
-    call_command('runserver')
+    call_command('runserver', '0.0.0.0:8000')
 
 
 if __name__ == "__main__":

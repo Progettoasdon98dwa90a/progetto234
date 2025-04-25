@@ -33,7 +33,7 @@ def single_employee_data(request, branch_id, employee_id):
         "employeeInfo": {
             "name": employee.first_name,
             "surname": employee.last_name,
-            "genre": employee.format_gender(),  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
+            "genre": employee.genre,  # Enum numerico (es. 0=Non specificato, 1=Maschio, 2=Femmina)
             "birthDate": employee.birth_date,
             "telNumber": employee.phone_number,
             "email": employee.email,
@@ -114,6 +114,8 @@ def update_employee(request, branch_id, employee_id):
             employee.phone_number = employee_info.get('telNumber')
             employee.email = employee_info.get('email')
             employee.birth_date = employee_info.get('birthDate')
+            employee.max_hours_per_month = employee_info.get('monthlyHour')
+            employee.hourly_cost = employee_info.get('hourlyCost')
             # Add other fields as necessary
             employee.save()
 
@@ -121,3 +123,10 @@ def update_employee(request, branch_id, employee_id):
         except Employee.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
     return None
+
+
+def set_employee_rest_days(request, branch_id, employee_id):
+    if request.method == 'POST':
+        data = json.loads(request.body.decode('utf-8'))
+        print(data)
+        return JsonResponse({'status': 'success', 'message': 'Employee updated successfully'})

@@ -41,7 +41,8 @@ urlpatterns = [
     path('dipendenti/<int:branch_id>/createEmployee/', new_employee, name='CREATE_EMPLOYEE'),
     path('dipendenti/<int:branch_id>/updateEmployee/<int:employee_id>/', update_employee, name='UPDATE_EMPLOYEE'),
     path('<int:branch_id>/report/branch/', get_branch_report, name='GET_BRANCH_REPORT'),
-
+    path('dipendenti/<int:branch_id>/updateEmployeeRestDays/<int:employee_id>/', set_employee_rest_days,
+         name='SET_EMPLOYEE_REST_DAYS')
 
 ]
 
