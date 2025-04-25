@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from api.models import Branch, Import
 
@@ -70,6 +71,7 @@ def getHistory(request, year, branch_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+@csrf_exempt
 def uploadImportData(request):
     if request.method == 'POST':
         uploaded_file = request.FILES['file']
