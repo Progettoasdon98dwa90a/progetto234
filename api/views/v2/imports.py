@@ -247,7 +247,6 @@ def uploadImportData(request):
                 return JsonResponse({"status": "success", "errors": []}, status=200)
 
         elif branch_obj.get_brand() == "original":
-            print("original")
 
             if selected_type == "counter_data":
                 if uploaded_file:

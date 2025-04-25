@@ -563,8 +563,6 @@ def report_employees(request):
         branch_param = request.GET.get('branch')
         date_param = request.GET.get('date')
 
-
-
         # Validate branch parameter
         if not branch_param:
             return JsonResponse({"status": "error", "errors": ["No branch selected"]}, status=400)

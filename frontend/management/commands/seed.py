@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 from django.core.management import call_command
 
 
-from api.models import Employee,Branch, Import
+from api.models import Employee,Branch, Import, Schedule
 
 current_directory = Path(__file__).resolve().parent.parent.parent.parent
 
@@ -155,3 +155,19 @@ class Command(BaseCommand):
 
         Import.objects.bulk_create(import_bulk_create_list)
         print("Import data created successfully.")
+
+        # get all branch employees
+        employees = list(Employee.objects.filter(branch=branch_obj).values_list('id', flat=True))
+
+        # create some mock schedules
+        s1 = Schedule.objects.create(start_date="2025-01-01",
+                                end_date="2025-01-31",
+                                branch=branch_obj,
+                                employees=employees,)
+        s2 = Schedule.objects.create(start_date="2025-02-01",
+                                    end_date="2025-02-28",
+                                    branch=branch_obj,
+                                    employees=employees, )
+        s1.save()
+        s2.save()
+        print("Schedule created successfully.")
