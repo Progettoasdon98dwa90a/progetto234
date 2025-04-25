@@ -48,7 +48,7 @@ def single_employee_data(request, branch_id, employee_id):
             "contractStart": employee.contract_start,
             "contractEnd": employee.contract_end,
         },
-        "restDays": [0,1],  # Valori possibili: 0= Lunedi, 1=Martedi, 2=Mercoledi, 3=Giovedi, 4=Venerdi, 5=Sabato, 6=Domenica
+        "restDays": employee.rest_days,  # Valori possibili: 0= Lunedi, 1=Martedi, 2=Mercoledi, 3=Giovedi, 4=Venerdi, 5=Sabato, 6=Domenica
         "holydays": [],  # Array di oggetti Ferie (struttura non specificata nell'originale)
         "workedHours": {
             "worked": "",
@@ -128,7 +128,6 @@ def update_employee(request, branch_id, employee_id):
 def set_employee_rest_days(request, branch_id, employee_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
-        print(data)
         try:
             employee = Employee.objects.get(id=employee_id)
             employee.rest_days = data
