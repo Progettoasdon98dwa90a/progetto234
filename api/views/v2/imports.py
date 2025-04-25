@@ -82,6 +82,12 @@ def uploadImportData(request):
 
         print(type(selected_branch), type(selected_type))
         print()
+        # parse selected_type and selected_branch into ints
+        try:
+            selected_type = int(selected_type)
+            selected_branch = int(selected_branch)
+        except:
+            return JsonResponse({"status": "error", "errors": ["Error parsing ints"]}, status=200)
 
         # 0 = sales_data, 1 = counter_data
         if selected_type == 0:
@@ -92,7 +98,7 @@ def uploadImportData(request):
         try:
             selected_branch = int(selected_branch)
         except:
-            return JsonResponse({"status": "error", "errors": ["Internal"]}, status=200)
+            return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=200)
 
         if not selected_branch:
             return JsonResponse({"status": "error", "errors": ["no branch selected"]}, status=200)
@@ -333,5 +339,5 @@ def uploadImportData(request):
 
                 return JsonResponse({"status": "success", "errors": []}, status=200)
 
-        return JsonResponse({"status": "error", "errors": ["Internal"]}, status=200)
-    return JsonResponse({"status": "error", "errors": ["Internal"]}, status=200)
+        return JsonResponse({"status": "error", "errors": ["No typeSelect"]}, status=200)
+    return JsonResponse({"status": "error", "errors": ["Invalid Method"]}, status=200)
