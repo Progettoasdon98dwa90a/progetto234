@@ -46,19 +46,21 @@ def get_branch_report(request, branch_id):
         # 0 = sales, 1 = 1 scontrini, 2 = ingressi + conversion_rate,
         chart_type = data.get("chart")
 
+        # convert from DD-MM-YYYY to YYYY-MM-DD
+        start_date_str = data.get("startDate")
+        end_date_str = data.get("endDate")
+        start_date_obj = datetime.strptime(start_date_str, "%d-%m-%Y").date()
+        end_date_obj = datetime.strptime(end_date_str, "%d-%m-%Y").date()
+        start_date_str = start_date_obj.strftime("%Y-%m-%d")
+        end_date_str = end_date_obj.strftime("%Y-%m-%d")
+
         if chart_type == 0:
-            start_date_str = data.get("startDate")
-            end_date_str = data.get("endDate")
             # Sales
             return JsonResponse(generate_branch_report_sales(branch_id, start_date_str, end_date_str))
         elif chart_type == 1:
-            start_date_str = data.get("startDate")
-            end_date_str = data.get("endDate")
             # Scontrini
             return JsonResponse(generate_branch_report_scontrini(branch_id, start_date_str, end_date_str))
         elif chart_type == 2:
-            start_date_str = data.get("startDate")
-            end_date_str = data.get("endDate")
             # Ingressi + Conversion Rate
             ingressi = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
             conversion_rate = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
