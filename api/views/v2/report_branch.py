@@ -8,6 +8,7 @@ from api.formulas.sales import generate_branch_report_sales
 from api.models import Branch
 from api.formulas.counter import generate_branch_tasso_attrazione_report
 
+
 def get_branch_report(request, branch_id):
     # Calculate fallback to the last 30 days
     start_date = datetime.now() - timedelta(days=30)
@@ -15,6 +16,9 @@ def get_branch_report(request, branch_id):
 
     start_date_str = start_date.strftime('%Y-%m-%d')
     end_date_str = end_date.strftime('%Y-%m-%d')
+
+    start_date_str = '2024-01-01'
+    end_date_str = '2024-01-31'
 
     try:
         branch_id = int(branch_id)

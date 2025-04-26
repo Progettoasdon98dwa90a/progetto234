@@ -1,24 +1,24 @@
 from django.http import JsonResponse
 from django.shortcuts import render
 
+from api.formulas.averages import generate_medium_performance, generate_medium_sales
+from api.formulas.receipts import generate_report_performance_scontrini
+from api.formulas.sales import generate_report_performance_sales
 from api.models import Branch
 
 
-class EmployeePerformancesTable:
-    pass
 
-
-def report_employees(request):
+def get_employees_report(request, branch_id):
     if request.method == 'GET':
         # Get the query string parameters
-        branch_param = request.GET.get('branch')
         date_param = request.GET.get('date')
+        date_param = "2024-01-01 to 2025-01-31"
 
         # Validate branch parameter
-        if not branch_param:
+        if not branch_id:
             return JsonResponse({"status": "error", "errors": ["No branch selected"]}, status=400)
         try:
-            branch_id = int(branch_param)
+            branch_id = int(branch_id)
         except ValueError:
             return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
 
@@ -66,7 +66,7 @@ def report_employees(request):
 
         medium_number_sales_performance = generate_medium_sales(sales_performance)
 
-        performance_table_data = []
+        '''performance_table_data = []
 
         for key, value in sc_performance.items():
             performance_table_data.append({
@@ -78,6 +78,7 @@ def report_employees(request):
             )
 
         performances_table = EmployeePerformancesTable(performance_table_data, orderable=False)
+        '''
 
         zoom_enabled = "true"
         graph_type = "area"
@@ -98,15 +99,14 @@ def report_employees(request):
 
         context = {
             "sc_performance": sc_performance,
-            "branch": Branch.objects.get(id=branch_id),
+            "branch": branch_id,
             "date_start": date_start,
             "date_end": date_end,
             "sales_performance": sales_performance,
-            "performances_table": performances_table,
             "sales_percentage": sales_percentage,
             "sc_percentage": sc_percentage,
             "zoom_enabled": zoom_enabled,
             "type" : graph_type,
         }
 
-        return render(request, "frontend/report/employees.html", context)
+        return JsonResponse(context, status=200)
