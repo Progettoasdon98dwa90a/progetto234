@@ -38,11 +38,17 @@ def get_branch_report(request, branch_id):
         target_ingressi = 100
 
         branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
+        receipts_data = generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)
 
         # 2. Prepare the data for the chart structure
         sales_values = list(branch_sales_data.values())
         sales_labels = list(branch_sales_data.keys())
-        num_data_points = len(sales_labels)  # Or len(sales_values)
+        sales_num_data_points = len(sales_labels)  # Or len(sales_values)
+
+        # 2. Prepare the data for the chart structure
+        receipts_values = list(branch_sales_data.values())
+        receipts_labels = list(branch_sales_data.keys())
+        receipts_num_data_points = len(receipts_labels)  # Or len(sales_values)
 
         # 3. Construct the final dictionary
         sales_chart_config = {
@@ -53,19 +59,25 @@ def get_branch_report(request, branch_id):
                     },
                     {
                         "name": "Totale sedi",  # Or perhaps "Target"? Adjust name if needed.
-                        "data": [target_sales] * num_data_points
+                        "data": [target_sales] * sales_num_data_points
                     }
                 ],
                 "labels": sales_labels
         }
 
+        receipts_chart_config = { #NO TOTALE SEDI
+            "series": [
+                {
+                    "name": "Scontrini",
+                    "data": receipts_values
+                },
+            ],
+            "labels": receipts_num_data_points
+        }
+
         report_data = {
             "sales": sales_chart_config,
-            "receipts": [{'name': 'Scontrini',
-                           'data': generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)},
-                          {'name': 'Totale sedi',
-                           'data': [target_scontrini] * len(generate_branch_report_scontrini(branch_id, start_date_str, end_date_str))}
-                          ],
+            "receipts": receipts_chart_config,
             "entrances": generate_ingressi_branch_report(branch_id, start_date_str, end_date_str),
             "conversionRate": generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str),
         }
