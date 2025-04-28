@@ -46,7 +46,6 @@ def get_branch_report(request, branch_id):
 
         # 3. Construct the final dictionary
         sales_chart_config = {
-            "sales": {
                 "series": [
                     {
                         "name": "Incassi",
@@ -58,7 +57,6 @@ def get_branch_report(request, branch_id):
                     }
                 ],
                 "labels": sales_labels
-            }
         }
 
         report_data = {
