@@ -44,12 +44,6 @@ def get_branch_report(request, branch_id):
         sales_values = list(branch_sales_data.values())
         sales_labels = list(branch_sales_data.keys())
         sales_num_data_points = len(sales_labels)  # Or len(sales_values)
-
-        # 2. Prepare the data for the chart structure
-        receipts_values = list(branch_sales_data.values())
-        receipts_labels = list(branch_sales_data.keys())
-
-        # 3. Construct the final dictionary
         sales_chart_config = {
                 "series": [
                     {
@@ -64,6 +58,9 @@ def get_branch_report(request, branch_id):
                 "labels": sales_labels
         }
 
+        # 2. Prepare the data for the chart structure
+        receipts_values = list(receipts_data.values())
+        receipts_labels = list(receipts_data.keys())
         receipts_chart_config = { #NO TOTALE SEDI
             "series": [
                 {
@@ -74,11 +71,33 @@ def get_branch_report(request, branch_id):
             "labels": receipts_labels
         }
 
+
+
+        entrances_data = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
+        entrances_values = list(entrances_data.values())
+        entrances_labels = list(entrances_data.keys())
+        conversion_rate_date = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
+        conversion_rate_values = list(conversion_rate_date.values())
+
+
+        entrances_chart_config = {  # NO TOTALE SEDI
+            "series": [
+                {
+                    "name": "Scontrini",
+                    "data": entrances_values
+                },
+                {
+                    "name": "Tasso di Conversione",
+                    "data": conversion_rate_values
+                },
+            ],
+            "labels": entrances_labels
+        }
+
         report_data = {
             "sales": sales_chart_config,
             "receipts": receipts_chart_config,
-            "entrances": generate_ingressi_branch_report(branch_id, start_date_str, end_date_str),
-            "conversionRate": generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str),
+            "entrances": entrances_chart_config,
         }
 
         return JsonResponse({"status": "success", "data": report_data})
