@@ -83,7 +83,7 @@ def get_branch_report(request, branch_id):
         entrances_chart_config = {  # NO TOTALE SEDI
             "series": [
                 {
-                    "name": "Scontrini",
+                    "name": "Ingressi",
                     "data": entrances_values
                 },
                 {
