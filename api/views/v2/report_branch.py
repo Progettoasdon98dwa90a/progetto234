@@ -38,11 +38,12 @@ def get_branch_report(request, branch_id):
         target_ingressi = 100
 
         report_data = {
-            "sales": [{'name': 'Incassi',
-                       'data': generate_branch_report_sales(branch_id, start_date_str, end_date_str)},
-                      {'name': 'Totale sedi',
-                       'data': [3000] * len(generate_branch_report_sales(branch_id, start_date_str, end_date_str))}
-                      ],
+            "sales": {'series' : [
+                {'name': 'Incassi',
+                    'data': list(generate_branch_report_sales(branch_id, start_date_str, end_date_str).values())},
+                ],
+                'labels': [list(generate_branch_report_sales(branch_id, start_date_str, end_date_str).keys())]
+            },
             "receipts": [{'name': 'Scontrini',
                            'data': generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)},
                           {'name': 'Totale sedi',
