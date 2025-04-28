@@ -34,7 +34,11 @@ def get_branch_report(request, branch_id):
             return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
 
         report_data = {
-            "sales": generate_branch_report_sales(branch_id, start_date_str, end_date_str),
+            "sales": [{'name': 'Incassi',
+                       'data': generate_branch_report_sales(branch_id, start_date_str, end_date_str)},
+                      {'name': 'Totale sedi',
+                       'data': [3000] * len(generate_branch_report_sales(branch_id, start_date_str, end_date_str))}
+                      ],
             "receipts": generate_branch_report_scontrini(branch_id, start_date_str, end_date_str),
             "entrances": generate_ingressi_branch_report(branch_id, start_date_str, end_date_str),
             "conversionRate": generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str),
@@ -45,7 +49,6 @@ def get_branch_report(request, branch_id):
         data = json.loads(request.body.decode('utf-8'))
         # 0 = sales, 1 = 1 scontrini, 2 = ingressi + conversion_rate,
         chart_type = data.get("chart")
-
         # convert from DD-MM-YYYY to YYYY-MM-DD
         start_date_str = data.get("startDate")
         end_date_str = data.get("endDate")
@@ -54,7 +57,17 @@ def get_branch_report(request, branch_id):
         start_date_str = start_date_obj.strftime("%Y-%m-%d")
         end_date_str = end_date_obj.strftime("%Y-%m-%d")
 
+        target = 3000
+
         if chart_type == 0:
+            obj1 = {
+                'name' : 'Incassi',
+                'data' : generate_branch_report_sales(branch_id, start_date_str, end_date_str)
+            }
+            obj2 = {
+                'name' : "Totale sedi",
+                'data' : [] # Target sede * n (dove n = alla lunghezza dell'array di data di incassi
+            }
             # Sales
             return JsonResponse(generate_branch_report_sales(branch_id, start_date_str, end_date_str))
         elif chart_type == 1:
