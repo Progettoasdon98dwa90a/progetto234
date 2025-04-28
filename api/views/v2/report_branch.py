@@ -48,7 +48,6 @@ def get_branch_report(request, branch_id):
         # 2. Prepare the data for the chart structure
         receipts_values = list(branch_sales_data.values())
         receipts_labels = list(branch_sales_data.keys())
-        receipts_num_data_points = len(receipts_labels)  # Or len(sales_values)
 
         # 3. Construct the final dictionary
         sales_chart_config = {
@@ -72,7 +71,7 @@ def get_branch_report(request, branch_id):
                     "data": receipts_values
                 },
             ],
-            "labels": receipts_num_data_points
+            "labels": receipts_labels
         }
 
         report_data = {
