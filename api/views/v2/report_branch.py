@@ -37,10 +37,8 @@ def get_branch_report(request, branch_id):
         target_scontrini = 100
         target_ingressi = 100
 
+        # Generate the sales chart data
         branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
-        receipts_data = generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)
-
-        # 2. Prepare the data for the chart structure
         sales_values = list(branch_sales_data.values())
         sales_labels = list(branch_sales_data.keys())
         sales_num_data_points = len(sales_labels)  # Or len(sales_values)
@@ -57,8 +55,8 @@ def get_branch_report(request, branch_id):
                 ],
                 "labels": sales_labels
         }
-
-        # 2. Prepare the data for the chart structure
+        # Generate the receipts chart data
+        receipts_data = generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)
         receipts_values = list(receipts_data.values())
         receipts_labels = list(receipts_data.keys())
         receipts_chart_config = { #NO TOTALE SEDI
@@ -70,16 +68,12 @@ def get_branch_report(request, branch_id):
             ],
             "labels": receipts_labels
         }
-
-
-
+        # Generate the entrances chart data
         entrances_data = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
         entrances_values = list(entrances_data.values())
         entrances_labels = list(entrances_data.keys())
         conversion_rate_date = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
         conversion_rate_values = list(conversion_rate_date.values())
-
-
         entrances_chart_config = {  # NO TOTALE SEDI
             "series": [
                 {
@@ -118,32 +112,59 @@ def get_branch_report(request, branch_id):
         target_ingressi = 100
 
         if chart_type == 0:
-            # Sales
-            obj = [{'name': 'Incassi',
-              'data': generate_branch_report_sales(branch_id, start_date_str, end_date_str)},
-             {'name': 'Totale sedi',
-              'data': [target_sales] * len(generate_branch_report_sales(branch_id, start_date_str, end_date_str))}
-             ]
-            # Sales
-            return JsonResponse(obj)
+            # Generate the sales chart data
+            branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
+            sales_values = list(branch_sales_data.values())
+            sales_labels = list(branch_sales_data.keys())
+            sales_num_data_points = len(sales_labels)  # Or len(sales_values)
+            sales_chart_config = {
+                "series": [
+                    {
+                        "name": "Incassi",
+                        "data": sales_values
+                    },
+                    {
+                        "name": "Totale sedi",  # Or perhaps "Target"? Adjust name if needed.
+                        "data": [target_sales] * sales_num_data_points
+                    }
+                ],
+                "labels": sales_labels
+            }
+            return JsonResponse(sales_chart_config)
         elif chart_type == 1:
-            # Scontrini
-            obj = [
-                {'name': 'Scontrini',
-                 'data': generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)},
-                {'name': 'Totale sedi',
-                 'data': [target_scontrini] * len(generate_branch_report_scontrini(branch_id, start_date_str, end_date_str))}
-            ]
-            return JsonResponse(obj)
+            receipts_data = generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)
+            receipts_values = list(receipts_data.values())
+            receipts_labels = list(receipts_data.keys())
+            receipts_chart_config = {  # NO TOTALE SEDI
+                "series": [
+                    {
+                        "name": "Scontrini",
+                        "data": receipts_values
+                    },
+                ],
+                "labels": receipts_labels
+            }
+            return JsonResponse(receipts_chart_config)
         elif chart_type == 2:
-            # Ingressi + Conversion Rate
-            obj = [
-                {'name': 'Ingressi',
-                 'data': generate_branch_traffico_esterno_report(branch_id, start_date_str, end_date_str)},
-                {'name': 'Tasso Conversione',
-                 'data': generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)}
-            ]
-            return JsonResponse(obj)
+            entrances_data = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
+            entrances_values = list(entrances_data.values())
+            entrances_labels = list(entrances_data.keys())
+            conversion_rate_date = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
+            conversion_rate_values = list(conversion_rate_date.values())
+            entrances_chart_config = {  # NO TOTALE SEDI
+                "series": [
+                    {
+                        "name": "Ingressi",
+                        "data": entrances_values
+                    },
+                    {
+                        "name": "Tasso di Conversione",
+                        "data": conversion_rate_values
+                    },
+                ],
+                "labels": entrances_labels
+            }
+            return JsonResponse(entrances_chart_config)
         else:
             return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
     return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
