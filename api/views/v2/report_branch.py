@@ -174,20 +174,6 @@ def get_branch_employees_report(request, branch_id):
             branch_id = int(branch_id)
         except ValueError:
             return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
-        employees_chart_config = {  # NO TOTALE SEDI
-            "series": [
-                {
-                    "name": "Ingressi",
-                    "data": entrances_values
-                },
-                {
-                    "name": "Tasso di Conversione",
-                    "data": conversion_rate_values
-                },
-            ],
-            "labels": entrances_labels
-        }
-
         main_obj = {
             'employees' : {
                 'series': [
