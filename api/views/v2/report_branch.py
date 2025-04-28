@@ -33,13 +33,21 @@ def get_branch_report(request, branch_id):
         except Branch.DoesNotExist:
             return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
 
+        target_sales = 3000
+        target_scontrini = 100
+        target_ingressi = 100
+
         report_data = {
             "sales": [{'name': 'Incassi',
                        'data': generate_branch_report_sales(branch_id, start_date_str, end_date_str)},
                       {'name': 'Totale sedi',
                        'data': [3000] * len(generate_branch_report_sales(branch_id, start_date_str, end_date_str))}
                       ],
-            "receipts": generate_branch_report_scontrini(branch_id, start_date_str, end_date_str),
+            "receipts": [{'name': 'Scontrini',
+                           'data': generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)},
+                          {'name': 'Totale sedi',
+                           'data': [target_scontrini] * len(generate_branch_report_scontrini(branch_id, start_date_str, end_date_str))}
+                          ],
             "entrances": generate_ingressi_branch_report(branch_id, start_date_str, end_date_str),
             "conversionRate": generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str),
         }
@@ -57,27 +65,37 @@ def get_branch_report(request, branch_id):
         start_date_str = start_date_obj.strftime("%Y-%m-%d")
         end_date_str = end_date_obj.strftime("%Y-%m-%d")
 
-        target = 3000
+        target_sales = 3000
+        target_scontrini = 100
+        target_ingressi = 100
 
         if chart_type == 0:
-            obj1 = {
-                'name' : 'Incassi',
-                'data' : generate_branch_report_sales(branch_id, start_date_str, end_date_str)
-            }
-            obj2 = {
-                'name' : "Totale sedi",
-                'data' : [] # Target sede * n (dove n = alla lunghezza dell'array di data di incassi
-            }
             # Sales
-            return JsonResponse(generate_branch_report_sales(branch_id, start_date_str, end_date_str))
+            obj = [{'name': 'Incassi',
+              'data': generate_branch_report_sales(branch_id, start_date_str, end_date_str)},
+             {'name': 'Totale sedi',
+              'data': [target_sales] * len(generate_branch_report_sales(branch_id, start_date_str, end_date_str))}
+             ]
+            # Sales
+            return JsonResponse(obj)
         elif chart_type == 1:
             # Scontrini
-            return JsonResponse(generate_branch_report_scontrini(branch_id, start_date_str, end_date_str))
+            obj = [
+                {'name': 'Scontrini',
+                 'data': generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)},
+                {'name': 'Totale sedi',
+                 'data': [target_scontrini] * len(generate_branch_report_scontrini(branch_id, start_date_str, end_date_str))}
+            ]
+            return JsonResponse(obj)
         elif chart_type == 2:
             # Ingressi + Conversion Rate
-            ingressi = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
-            conversion_rate = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
-            return JsonResponse({"ingressi": ingressi, "conversion_rate": conversion_rate})
+            obj = [
+                {'name': 'Ingressi',
+                 'data': generate_branch_traffico_esterno_report(branch_id, start_date_str, end_date_str)},
+                {'name': 'Tasso Conversione',
+                 'data': generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)}
+            ]
+            return JsonResponse(obj)
         else:
             return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
     return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
