@@ -37,14 +37,32 @@ def get_branch_report(request, branch_id):
         target_scontrini = 100
         target_ingressi = 100
 
-        report_data = {
-            "sales": {'series' : [{'name': 'Incassi',
-                                   'data': list(generate_branch_report_sales(branch_id,
-                                                                             start_date_str,
-                                                                             end_date_str).values())},
-                                    ],
-                        'labels': list(generate_branch_report_sales(branch_id, start_date_str, end_date_str).keys())
+        branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
+
+        # 2. Prepare the data for the chart structure
+        sales_values = list(branch_sales_data.values())
+        sales_labels = list(branch_sales_data.keys())
+        num_data_points = len(sales_labels)  # Or len(sales_values)
+
+        # 3. Construct the final dictionary
+        sales_chart_config = {
+            "sales": {
+                "series": [
+                    {
+                        "name": "Incassi",
+                        "data": sales_values
                     },
+                    {
+                        "name": "Totale sedi",  # Or perhaps "Target"? Adjust name if needed.
+                        "data": [target_sales] * num_data_points
+                    }
+                ],
+                "labels": sales_labels
+            }
+        }
+
+        report_data = {
+            "sales": sales_chart_config,
             "receipts": [{'name': 'Scontrini',
                            'data': generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)},
                           {'name': 'Totale sedi',
