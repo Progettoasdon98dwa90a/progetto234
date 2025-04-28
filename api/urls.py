@@ -8,7 +8,7 @@ from api.views.v2.employees import single_employee_data
 from api.views.v2.employees import set_employee_rest_days
 from api.views.v2.employees import new_employee
 from api.views.v2.employees import update_employee
-from api.views.v2.report_branch import get_branch_report
+from api.views.v2.report_branch import get_branch_report, get_branch_employees_report
 from api.views.v2.imports import getHistory
 from api.views.v2.imports import uploadImportData
 from api.views.v2.dashboard import dashboard_data
@@ -48,7 +48,7 @@ urlpatterns = [
     path('<int:branch_id>/report/employees/', get_employees_report, name='GET_EMPLOYEES_REPORT'),
 
     path('report/branch/<int:branch_id>/', get_branch_report, name='GET_BRANCH_REPORT'),
-
+    path('report/employee/<int:branch_id>/', get_branch_employees_report, name='GET_BRANCH_EMPLOYEES_REPORT'),
 
     path('dipendenti/<int:branch_id>/updateEmployeeRestDays/<int:employee_id>/', set_employee_rest_days, name='SET_EMPLOYEE_REST_DAYS'),
 

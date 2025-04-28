@@ -5,20 +5,22 @@ from datetime import datetime, timedelta
 
 from django.views.decorators.csrf import csrf_exempt
 
-from api.formulas.counter import generate_ingressi_branch_report, generate_branch_report_conversion_rate, \
-    generate_branch_traffico_esterno_report
+from api.formulas.counter import generate_ingressi_branch_report, generate_branch_report_conversion_rate
 from api.formulas.receipts import generate_branch_report_scontrini
 from api.formulas.sales import generate_branch_report_sales
 from api.models import Branch
-from api.formulas.counter import generate_branch_tasso_attrazione_report
 
 
 @csrf_exempt
 def get_branch_report(request, branch_id):
+    target_sales = 200
+    target_scontrini = 100
+    target_ingressi = 100
+
     if request.method == 'GET':
         # Calculate fallback to the last 30 days
         start_date = datetime.now() - timedelta(days=371) # 7 days
-        end_date = datetime.now()  - timedelta(days=365)
+        end_date = datetime.now() - timedelta(days=365)
 
         start_date_str = start_date.strftime('%Y-%m-%d')
         end_date_str = end_date.strftime('%Y-%m-%d')
@@ -33,9 +35,6 @@ def get_branch_report(request, branch_id):
         except Branch.DoesNotExist:
             return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
 
-        target_sales = 200
-        target_scontrini = 100
-        target_ingressi = 100
 
         # Generate the sales chart data
         branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
@@ -107,10 +106,6 @@ def get_branch_report(request, branch_id):
         start_date_str = start_date_obj.strftime("%Y-%m-%d")
         end_date_str = end_date_obj.strftime("%Y-%m-%d")
 
-        target_sales = 3000
-        target_scontrini = 100
-        target_ingressi = 100
-
         if chart_type == 0:
             # Generate the sales chart data
             branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
@@ -125,7 +120,7 @@ def get_branch_report(request, branch_id):
                     },
                     {
                         "name": "Totale sedi",  # Or perhaps "Target"? Adjust name if needed.
-                        "data": [target_sales] * sales_num_data_points
+                        "data": [target_scontrini] * sales_num_data_points
                     }
                 ],
                 "labels": sales_labels
@@ -170,5 +165,49 @@ def get_branch_report(request, branch_id):
     return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
 
 
+def get_branch_employees_report(request, branch_id):
+    if request.method == 'GET':
+        # fallback to start of the year until now
+        start_date_str = datetime.now().strftime("%Y-%m-%d")
+        end_date_str = datetime.now().strftime("%Y-%m-%d")
+        try:
+            branch_id = int(branch_id)
+        except ValueError:
+            return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
+        employees_chart_config = {  # NO TOTALE SEDI
+            "series": [
+                {
+                    "name": "Ingressi",
+                    "data": entrances_values
+                },
+                {
+                    "name": "Tasso di Conversione",
+                    "data": conversion_rate_values
+                },
+            ],
+            "labels": entrances_labels
+        }
 
+        main_obj = {
+            'employees' : {
+                'series': [
+                    {
+                        'name': 'Media Pezzi Venduti',
+                        'data' : [300, 300, 300, 300, 300, 300]
+                    },
+                    {
+                        'name': 'Scontrino Medio',
+                        'data': [50.3, 50.3, 50.3, 50.3, 50.3, 50.3]
+                    },
+                    {
+                        'name': 'Media Numero Scontrini',
+                        'data': [150, 150, 150, 150, 150, 150]
+                    }
+                ],
+            'labels': ["Gianni", "Giorgio", "Giovanni", "Giulio", "Giuseppe", "Giovanni"]
+            }
+        }
 
+        return JsonResponse({"status": "success", "data": main_obj})
+
+    return None

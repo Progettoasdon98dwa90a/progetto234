@@ -6,8 +6,6 @@ from api.formulas.receipts import generate_report_performance_scontrini
 from api.formulas.sales import generate_report_performance_sales
 from api.models import Branch
 
-
-
 def get_employees_report(request, branch_id):
     if request.method == 'GET':
         # Get the query string parameters
@@ -65,20 +63,6 @@ def get_employees_report(request, branch_id):
         medium_sales_performance = generate_medium_performance(sales_performance)
 
         medium_number_sales_performance = generate_medium_sales(sales_performance)
-
-        '''performance_table_data = []
-
-        for key, value in sc_performance.items():
-            performance_table_data.append({
-                    "employee": key,
-                    "quantita": int(medium_number_sales_performance[key]),
-                    "n_scontrini": medium_sc_sales[key],
-                    "importo": medium_sales_performance[key],
-                }
-            )
-
-        performances_table = EmployeePerformancesTable(performance_table_data, orderable=False)
-        '''
 
         zoom_enabled = "true"
         graph_type = "area"
