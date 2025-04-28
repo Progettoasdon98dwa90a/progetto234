@@ -33,7 +33,7 @@ def get_branch_report(request, branch_id):
         except Branch.DoesNotExist:
             return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
 
-        target_sales = 3000
+        target_sales = 200
         target_scontrini = 100
         target_ingressi = 100
 
