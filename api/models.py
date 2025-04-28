@@ -44,7 +44,7 @@ class Employee(models.Model):
 
     extra_data = models.JSONField(default=dict)
 
-    def __str__(self):
+    def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
 
 class Schedule(models.Model):

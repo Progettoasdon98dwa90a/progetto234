@@ -1,14 +1,20 @@
 import json
+from pprint import pprint
 
+from django.db.models import F, Value
+from django.db.models.functions import Concat
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 
 from django.views.decorators.csrf import csrf_exempt
 
+from api.formulas.averages import generate_medium_performance
 from api.formulas.counter import generate_ingressi_branch_report, generate_branch_report_conversion_rate
-from api.formulas.receipts import generate_branch_report_scontrini
-from api.formulas.sales import generate_branch_report_sales
-from api.models import Branch
+from api.formulas.receipts import generate_branch_report_scontrini, get_scontrini_dipendente_date_range, \
+    get_scontrini_dipendente_single_date, generate_report_performance_scontrini
+from api.formulas.sales import generate_branch_report_sales, generate_report_performance_sales, \
+    generate_number_sales_performance
+from api.models import Branch, Employee, Import
 
 
 @csrf_exempt
@@ -168,32 +174,69 @@ def get_branch_report(request, branch_id):
 def get_branch_employees_report(request, branch_id):
     if request.method == 'GET':
         # fallback to start of the year until now
-        start_date_str = datetime.now().strftime("%Y-%m-%d")
-        end_date_str = datetime.now().strftime("%Y-%m-%d")
+        start_date = datetime.now().replace(month=1, day=1)
+        start_date_str = start_date.strftime("%Y-%m-%d")  # from start of the year
+        end_date = datetime.now()
+        end_date_str = end_date.strftime("%Y-%m-%d")
         try:
             branch_id = int(branch_id)
         except ValueError:
             return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
+
+        try:
+            employees = Employee.objects.filter(branch_id=branch_id)
+        except Branch.DoesNotExist:
+            return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
+
+
+        sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
+        scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
+        number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
+
+        medium_scontrini = generate_medium_performance(scontrini_report_data)
+        medium_sales = generate_medium_performance(sales_report_data)
+        medium_number_sales = generate_medium_performance(number_sales_report_data)
+
+        '''
+        print("Sales Report Data:")
+        pprint(sales_report_data)
+        print("Scontrini Report Data:")
+        pprint(scontrini_report_data)
+        print("Number Sales Report Data:")
+        pprint(number_sales_report_data)
+
+        print("Medium Scontrini:")
+        pprint(medium_scontrini)
+        print("Medium Sales:")
+        pprint(medium_sales)
+        print("Medium Number Sales:")
+        pprint(medium_number_sales)
+        
+        
+        '''  # Uncomment for debugging
+
         main_obj = {
             'employees' : {
                 'series': [
                     {
                         'name': 'Media Pezzi Venduti',
-                        'data' : [300, 300, 300, 300, 300, 300]
+                        'data' : list(medium_number_sales.values())
                     },
                     {
                         'name': 'Scontrino Medio',
-                        'data': [50.3, 50.3, 50.3, 50.3, 50.3, 50.3]
+                        'data': list(medium_sales.values())
                     },
                     {
                         'name': 'Media Numero Scontrini',
-                        'data': [150, 150, 150, 150, 150, 150]
+                        'data': list(medium_scontrini.values())
                     }
                 ],
-            'labels': ["Gianni", "Giorgio", "Giovanni", "Giulio", "Giuseppe", "Giovanni"]
+
+            'labels': [emp.get_full_name() for emp in employees]
+
             }
         }
 
         return JsonResponse({"status": "success", "data": main_obj})
 
-    return None
+    return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
