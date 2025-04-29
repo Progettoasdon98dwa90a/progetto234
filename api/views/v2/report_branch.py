@@ -175,10 +175,15 @@ def get_branch_employees_report(request, branch_id):
         end_date_str = end_date.strftime('%Y-%m-%d')
         chart_type = 0
         '''
+        chart_type = None
 
         # Get the query string parameters
-        data = json.loads(request.body.decode('utf-8'))
-        chart_type = data.get("chart", None)
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            chart_type = data.get("chart", None)
+        except json.JSONDecodeError:
+            pass
+
         # convert from DD-MM-YYYY to YYYY-MM-DD
         start_date_str = data.get("startDate")
         end_date_str = data.get("endDate")
