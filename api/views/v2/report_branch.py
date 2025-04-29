@@ -24,20 +24,21 @@ def parse_date(date_str, format_from, format_to='%Y-%m-%d'):
     return datetime.strptime(date_str, format_from).strftime(format_to)
 
 
-def get_dates(request, default_days=7):
+def get_dates(request, default_days=6):
     """Get and validate date range from request"""
     try:
         if request.method == 'GET':
             start_date = datetime.now() - timedelta(days=default_days + 1)
             end_date = datetime.now() - timedelta(days=1)
             return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
-
-        data = json.loads(request.body.decode('utf-8'))
-        start_str = parse_date(data['startDate'], '%Y-%m-%d')
-        end_str = parse_date(data['endDate'], '%Y-%m-%d')
-        return start_str, end_str
-
-    except (KeyError, json.JSONDecodeError):
+        elif request.method == 'POST':
+            data = json.loads(request.body.decode('utf-8'))
+            start_str = parse_date(data['startDate'], '%Y-%m-%d')
+            end_str = parse_date(data['endDate'], '%Y-%m-%d')
+            return start_str, end_str
+        else:
+            return None, None
+    except (KeyError, json.JSONDecodeError, ):
         return JsonResponse(
             {"status": "error", "errors": ["Invalid date format"]},
             status=400
@@ -79,7 +80,7 @@ def get_branch_report(request, branch_id):
         )
 
     if request.method == 'GET':
-        start_date, end_date = get_dates(request, 7)
+        start_date, end_date = get_dates(request, 6)
         report_data = {
             "sales": build_chart_config(
                 generate_branch_report_sales(branch.id, start_date, end_date),
@@ -170,20 +171,17 @@ def get_branch_employees_report(request, branch_id):
 
     try:
         start_date, end_date = get_dates(request)
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"status": "error", "errors": ["Invalid date format"]},
-            status=400
-        )
+    except (KeyError, json.JSONDecodeError, ValueError):
+        start_date_obj = datetime.now() - timedelta(days=6 + 1)
+        end_date_obj = datetime.now() - timedelta(days=1)
+        start_date = start_date_obj.strftime('%Y-%m-%d')
+        end_date = end_date_obj.strftime('%Y-%m-%d')
 
     # get chart type
     try:
         chart_type = json.loads(request.body.decode('utf-8')).get("chart")
     except json.JSONDecodeError:
-        return JsonResponse(
-            {"status": "error", "errors": ["Invalid request body"]},
-            status=400
-        )
+        chart_type = None
 
     if chart_type:
         print("Chart Type:", chart_type)
