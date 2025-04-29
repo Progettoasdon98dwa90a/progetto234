@@ -242,6 +242,7 @@ def get_branch_employees_report(request, branch_id):
             end_date_str = end_date.strftime("%Y-%m-%d")
 
 
+
         medium_number_receipts = generate_medium_performance(scontrini_report_data)
         medium_sales = generate_medium_performance(sales_report_data)
         medium_number_sales = generate_medium_performance(number_sales_report_data)
@@ -279,7 +280,8 @@ def get_branch_employees_report(request, branch_id):
 
         # Create the main object for the response
 
-        medium_sales_obj['labels'] = [emp.get_full_name() for emp in employees]
+        print(number_sales_report_data)
+        medium_sales_obj['labels'] = [(start_date_obj + timedelta(n)).strftime("%Y-%m-%d") for n in range((end_date_obj-start_date_obj).days + 1)]
 
         main_obj = {
             'employees' : {
