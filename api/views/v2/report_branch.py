@@ -165,7 +165,7 @@ def get_branch_report(request, branch_id):
             return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
     return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
 
-
+@csrf_exempt
 def get_branch_employees_report(request, branch_id):
     if request.method == 'GET':
         # Get the query string parameters
@@ -205,11 +205,6 @@ def get_branch_employees_report(request, branch_id):
         # Check if the branch has employees
         if not employees.exists():
             return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
-
-        obj = {
-            'series': [],
-            'labels': []
-        }
 
         if chart_type == 0:
             obj = {
