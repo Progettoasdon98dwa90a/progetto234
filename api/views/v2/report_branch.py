@@ -276,11 +276,11 @@ def get_branch_employees_report(request, branch_id):
     elif request.method == 'POST':
         # Get the query string parameters
         try:
-            data = json.loads(request.body.decode('utf-8'))
-            chart_type = data.get("chart", None)
+            data = request.POST.get
+            chart_type = request.POST.get("chart", None)
             # convert from DD-MM-YYYY to YYYY-MM-DD
-            start_date_str = data.get("startDate")
-            end_date_str = data.get("endDate")
+            start_date_str = request.POST.get("chart", None)
+            end_date_str = request.POST.get("chart", None)
         except json.JSONDecodeError:
             start_date = datetime.now() - timedelta(days=371)  # 7 days
             end_date = datetime.now() - timedelta(days=365)
