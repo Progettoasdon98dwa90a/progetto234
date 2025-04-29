@@ -206,34 +206,7 @@ def get_branch_employees_report(request, branch_id):
         if not employees.exists():
             return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
 
-        if chart_type == 0:
-            obj = {
-                'series': [],
-                'labels': []
-            }
-            for emp, values in number_sales_report_data.items():
-                employee_series = {
-                    'name': emp,
-                    'data': values
-                }
-                obj['series'].append(employee_series)
-            # Create the main object for the response
 
-            obj['labels'] = [emp.get_full_name() for emp in employees]
-            return JsonResponse({"status": "success", "data": obj}, status=400)
-        elif chart_type == 1:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
-        elif chart_type == 2:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
-        elif not chart_type:
-            pass
-
-        if not start_date_str or not end_date_str:
-            # fallback to start of the year until now
-            start_date = datetime.now().replace(month=1, day=1)
-            start_date_str = start_date.strftime("%Y-%m-%d")  # from start of the year
-            end_date = datetime.now()
-            end_date_str = end_date.strftime("%Y-%m-%d")
 
 
 
@@ -300,5 +273,71 @@ def get_branch_employees_report(request, branch_id):
         }
 
         return JsonResponse({"status": "success", "data": main_obj})
+    elif request.method == 'POST':
+        # Get the query string parameters
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            chart_type = data.get("chart", None)
+            # convert from DD-MM-YYYY to YYYY-MM-DD
+            start_date_str = data.get("startDate")
+            end_date_str = data.get("endDate")
+        except json.JSONDecodeError:
+            start_date = datetime.now() - timedelta(days=371)  # 7 days
+            end_date = datetime.now() - timedelta(days=365)
+            start_date_str = start_date.strftime('%Y-%m-%d')
+            end_date_str = end_date.strftime('%Y-%m-%d')
+            chart_type = None
+
+        try:
+            branch_id = int(branch_id)
+        except ValueError:
+            return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
+
+        try:
+            employees = Employee.objects.filter(branch_id=branch_id)
+        except Branch.DoesNotExist:
+            return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
+
+        # Check if the branch has employees
+        if not employees.exists():
+            return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
+
+        start_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        start_date_str = start_date_obj.strftime("%Y-%m-%d")
+        end_date_str = end_date_obj.strftime("%Y-%m-%d")
+
+        sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
+        scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
+        number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
+
+        medium_number_receipts = generate_medium_performance(scontrini_report_data)
+        medium_sales = generate_medium_performance(sales_report_data)
+        medium_number_sales = generate_medium_performance(number_sales_report_data)
+
+
+        if chart_type == 0:
+            obj = {
+                'series': [],
+                'labels': []
+            }
+            for emp, values in number_sales_report_data.items():
+                employee_series = {
+                    'name': emp,
+                    'data': values
+                }
+                obj['series'].append(employee_series)
+            # Create the main object for the response
+
+            obj['labels'] = [emp.get_full_name() for emp in employees]
+            return JsonResponse({"status": "success", "data": obj}, status=400)
+        elif chart_type == 1:
+            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
+        elif chart_type == 2:
+            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
+        elif not chart_type:
+            pass
+
+
 
     return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
