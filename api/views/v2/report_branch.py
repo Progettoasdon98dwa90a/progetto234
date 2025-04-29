@@ -269,13 +269,13 @@ def get_branch_employees_report(request, branch_id):
             'labels': []
 
         }
-        for emp in employees:
+        print(number_sales_report_data)
+
+        for emp, values in number_sales_report_data.items():
             employee_series = {
-                'name': emp.get_full_name(),
-                'data': []
+                'name': emp,
+                'data': values
             }
-            for date, value in number_sales_report_data.items():
-                employee_series['data'].append(value)
             medium_sales_obj['series'].append(employee_series)
 
         # Create the main object for the response
