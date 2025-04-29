@@ -177,7 +177,7 @@ def get_branch_employees_report(request, branch_id):
             end_date_str = data.get("endDate")
         except json.JSONDecodeError:
             start_date = datetime.now() - timedelta(days=371)  # 7 days
-            end_date = datetime.now() - timedelta(days=300)
+            end_date = datetime.now() - timedelta(days=365)
             start_date_str = start_date.strftime('%Y-%m-%d')
             end_date_str = end_date.strftime('%Y-%m-%d')
             chart_type = None
