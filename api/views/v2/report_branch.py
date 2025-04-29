@@ -242,9 +242,6 @@ def get_branch_employees_report(request, branch_id):
             end_date_str = end_date.strftime("%Y-%m-%d")
 
 
-
-
-
         medium_number_receipts = generate_medium_performance(scontrini_report_data)
         medium_sales = generate_medium_performance(sales_report_data)
         medium_number_sales = generate_medium_performance(number_sales_report_data)
@@ -266,27 +263,45 @@ def get_branch_employees_report(request, branch_id):
         
         
         '''  # Uncomment for debugging
+        medium_sales_obj = {
+            'series': [],
+            'labels': []
+
+        }
+        for emp in employees:
+            employee_series = {
+                'name': emp.get_full_name(),
+                'data': []
+            }
+            for date, value in medium_number_sales.items():
+                employee_series['data'].append(value)
+            medium_sales_obj['series'].append(employee_series)
+
+        # Create the main object for the response
+
+        medium_sales_obj['labels'] = [emp.get_full_name() for emp in employees]
 
         main_obj = {
             'employees' : {
-                'series': [
-                    {
-                        'name': 'Media Pezzi Venduti',
-                        'data' : list(medium_number_sales.values())
-                    },
-                    {
-                        'name': 'Scontrino Medio',
-                        'data': list(medium_sales.values())
-                    },
-                    {
-                        'name': 'Media Numero Scontrini',
-                        'data': list(medium_number_receipts.values())
-                    }
-                ],
+                    'series': [
+                        {
+                            'name': 'Media Pezzi Venduti',
+                            'data' : list(medium_number_sales.values())
+                        },
+                        {
+                            'name': 'Scontrino Medio',
+                            'data': list(medium_sales.values())
+                        },
+                        {
+                            'name': 'Media Numero Scontrini',
+                            'data': list(medium_number_receipts.values())
+                        }
+                    ],
 
-            'labels': [emp.get_full_name() for emp in employees]
+                    'labels': [emp.get_full_name() for emp in employees]
 
-            }
+                    },
+            'mediumNumberSales' : medium_sales_obj
 
         }
 
