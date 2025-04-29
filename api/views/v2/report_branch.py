@@ -302,18 +302,9 @@ def get_branch_employees_report(request, branch_id):
         if not employees.exists():
             return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
 
-        start_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-        end_date_obj = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        start_date_str = start_date_obj.strftime("%Y-%m-%d")
-        end_date_str = end_date_obj.strftime("%Y-%m-%d")
-
         sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
         scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
         number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
-
-        medium_number_receipts = generate_medium_performance(scontrini_report_data)
-        medium_sales = generate_medium_performance(sales_report_data)
-        medium_number_sales = generate_medium_performance(number_sales_report_data)
 
 
         if chart_type == 0:
