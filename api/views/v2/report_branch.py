@@ -287,6 +287,7 @@ def get_branch_employees_report(request, branch_id):
             start_date_str = start_date.strftime('%Y-%m-%d')
             end_date_str = end_date.strftime('%Y-%m-%d')
             chart_type = None
+            print('error decoding body')
 
         try:
             branch_id = int(branch_id)
@@ -328,7 +329,7 @@ def get_branch_employees_report(request, branch_id):
             return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
         elif not chart_type:
             pass
+        else:
+            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
 
 
-
-    return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
