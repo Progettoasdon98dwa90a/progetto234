@@ -178,7 +178,7 @@ def get_branch_employees_report(request, branch_id):
 
         # Get the query string parameters
         data = json.loads(request.body.decode('utf-8'))
-        chart_type = data.get("chart")
+        chart_type = data.get("chart", None)
         # convert from DD-MM-YYYY to YYYY-MM-DD
         start_date_str = data.get("startDate")
         end_date_str = data.get("endDate")
@@ -232,7 +232,7 @@ def get_branch_employees_report(request, branch_id):
         elif chart_type == 2:
             return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
         elif not chart_type:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
+            pass
 
         if not start_date_str or not end_date_str:
             # fallback to start of the year until now
