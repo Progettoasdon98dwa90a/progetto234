@@ -1,7 +1,6 @@
 import json
 from django.http import JsonResponse
 from datetime import datetime, timedelta
-
 from django.views.decorators.csrf import csrf_exempt
 
 from api.formulas.averages import generate_medium_performance
@@ -12,321 +11,201 @@ from api.formulas.sales import generate_branch_report_sales, generate_report_per
 from api.models import Branch, Employee
 
 
+# Constants
+TARGETS = {'sales': 200, 'scontrini': 100, 'ingressi': 100}
+CHART_TYPES = {'SALES': 0, 'RECEIPTS': 1, 'ENTRANCES': 2}
+
+
+def parse_date(date_str, format_from, format_to='%Y-%m-%d'):
+    """Parse and convert date between formats"""
+    return datetime.strptime(date_str, format_from).strftime(format_to)
+
+
+def get_dates(request, default_days=7):
+    """Get and validate date range from request"""
+    try:
+        if request.method == 'GET':
+            start_date = datetime.now() - timedelta(days=default_days + 1)
+            end_date = datetime.now() - timedelta(days=1)
+            return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+
+        data = json.loads(request.body.decode('utf-8'))
+        start_str = parse_date(data['startDate'], '%d-%m-%Y')
+        end_str = parse_date(data['endDate'], '%d-%m-%Y')
+        return start_str, end_str
+
+    except (KeyError, json.JSONDecodeError):
+        return JsonResponse(
+            {"status": "error", "errors": ["Invalid date format"]},
+            status=400
+        )
+
+
+def get_branch(branch_id):
+    """Validate and return branch object"""
+    try:
+        return Branch.objects.get(id=int(branch_id))
+    except (ValueError, Branch.DoesNotExist):
+        return None
+
+
+def build_chart_config(data, chart_type, target=None):
+    """Build standardized chart configuration"""
+    config = {
+        "series": [{"name": chart_type, "data": list(data.values())}],
+        "labels": list(data.keys())
+    }
+
+    if target:
+        config["series"].append({
+            "name": "Target",
+            "data": [target] * len(data)
+        })
+
+    return config
+
+
 @csrf_exempt
 def get_branch_report(request, branch_id):
-    target_sales = 200
-    target_scontrini = 100
-    target_ingressi = 100
+    """Handle branch report requests"""
+    branch = get_branch(branch_id)
+    if not branch:
+        return JsonResponse(
+            {"status": "error", "errors": ["Invalid branch ID"]},
+            status=400
+        )
 
     if request.method == 'GET':
-        # Calculate fallback to the last 30 days
-        start_date = datetime.now() - timedelta(days=371) # 7 days
-        end_date = datetime.now() - timedelta(days=365)
-
-        start_date_str = start_date.strftime('%Y-%m-%d')
-        end_date_str = end_date.strftime('%Y-%m-%d')
-
-        try:
-            branch_id = int(branch_id)
-        except ValueError:
-            return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
-
-        try:
-            branch = Branch.objects.get(id=branch_id)
-        except Branch.DoesNotExist:
-            return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
-
-
-        # Generate the sales chart data
-        branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
-        sales_values = list(branch_sales_data.values())
-        sales_labels = list(branch_sales_data.keys())
-        sales_num_data_points = len(sales_labels)  # Or len(sales_values)
-        sales_chart_config = {
-                "series": [
-                    {
-                        "name": "Incassi",
-                        "data": sales_values
-                    },
-                    {
-                        "name": "Totale sedi",  # Or perhaps "Target"? Adjust name if needed.
-                        "data": [target_sales] * sales_num_data_points
-                    }
-                ],
-                "labels": sales_labels
-        }
-        # Generate the receipts chart data
-        receipts_data = generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)
-        receipts_values = list(receipts_data.values())
-        receipts_labels = list(receipts_data.keys())
-        receipts_chart_config = { #NO TOTALE SEDI
-            "series": [
-                {
-                    "name": "Scontrini",
-                    "data": receipts_values
-                },
-            ],
-            "labels": receipts_labels
-        }
-        # Generate the entrances chart data
-        entrances_data = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
-        entrances_values = list(entrances_data.values())
-        entrances_labels = list(entrances_data.keys())
-        conversion_rate_date = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
-        conversion_rate_values = list(conversion_rate_date.values())
-        entrances_chart_config = {  # NO TOTALE SEDI
-            "series": [
-                {
-                    "name": "Ingressi",
-                    "data": entrances_values
-                },
-                {
-                    "name": "Tasso di Conversione",
-                    "data": conversion_rate_values
-                },
-            ],
-            "labels": entrances_labels
-        }
-
+        start_date, end_date = get_dates(request, 7)
         report_data = {
-            "sales": sales_chart_config,
-            "receipts": receipts_chart_config,
-            "entrances": entrances_chart_config,
+            "sales": build_chart_config(
+                generate_branch_report_sales(branch.id, start_date, end_date),
+                "Incassi",
+                TARGETS['sales']
+            ),
+            "receipts": build_chart_config(
+                generate_branch_report_scontrini(branch.id, start_date, end_date),
+                "Scontrini"
+            ),
+            "entrances": {
+                "series": [
+                    {"name": "Ingressi", "data": list(generate_ingressi_branch_report(branch.id, start_date, end_date).values())
+                     },
+                    {"name": "Tasso di Conversione", "data": list(
+                        generate_branch_report_conversion_rate(
+                            branch.id, start_date, end_date).values())
+                     }
+                ],
+                "labels": list(generate_ingressi_branch_report(
+                    branch.id, start_date, end_date).keys())
+            }
+        }
+        return JsonResponse({"status": "success", "data": report_data})
+
+    if request.method == 'POST':
+        try:
+            chart_type = json.loads(request.body.decode('utf-8')).get("chart")
+            start_date, end_date = get_dates(request)
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"status": "error", "errors": ["Invalid request body"]},
+                status=400
+            )
+
+        generators = {
+            CHART_TYPES['SALES']: (generate_branch_report_sales, "Incassi", TARGETS['sales']),
+            CHART_TYPES['RECEIPTS']: (generate_branch_report_scontrini, "Scontrini", None),
+            CHART_TYPES['ENTRANCES']: (generate_ingressi_branch_report, "Ingressi", None)
         }
 
-        return JsonResponse({"status": "success", "data": report_data})
-    if request.method == 'POST':
-        data = json.loads(request.body.decode('utf-8'))
-        # 0 = sales, 1 = 1 scontrini, 2 = ingressi + conversion_rate,
-        chart_type = data.get("chart")
-        # convert from DD-MM-YYYY to YYYY-MM-DD
-        start_date_str = data.get("startDate")
-        end_date_str = data.get("endDate")
-        start_date_obj = datetime.strptime(start_date_str, "%d-%m-%Y").date()
-        end_date_obj = datetime.strptime(end_date_str, "%d-%m-%Y").date()
-        start_date_str = start_date_obj.strftime("%Y-%m-%d")
-        end_date_str = end_date_obj.strftime("%Y-%m-%d")
+        if chart_type not in generators:
+            return JsonResponse(
+                {"status": "error", "errors": ["Invalid chart type"]},
+                status=400
+            )
 
-        if chart_type == 0:
-            # Generate the sales chart data
-            branch_sales_data = generate_branch_report_sales(branch_id, start_date_str, end_date_str)
-            sales_values = list(branch_sales_data.values())
-            sales_labels = list(branch_sales_data.keys())
-            sales_num_data_points = len(sales_labels)  # Or len(sales_values)
-            sales_chart_config = {
+        generator, name, target = generators[chart_type]
+        data = generator(branch.id, start_date, end_date)
+
+        if chart_type == CHART_TYPES['ENTRANCES']:
+            conversion_data = generate_branch_report_conversion_rate(
+                branch.id, start_date, end_date)
+            config = {
                 "series": [
-                    {
-                        "name": "Incassi",
-                        "data": sales_values
-                    },
-                    {
-                        "name": "Totale sedi",  # Or perhaps "Target"? Adjust name if needed.
-                        "data": [target_scontrini] * sales_num_data_points
-                    }
+                    {"name": name, "data": list(data.values())},
+                    {"name": "Tasso di Conversione", "data": list(conversion_data.values())}
                 ],
-                "labels": sales_labels
+                "labels": list(data.keys())
             }
-            return JsonResponse(sales_chart_config)
-        elif chart_type == 1:
-            receipts_data = generate_branch_report_scontrini(branch_id, start_date_str, end_date_str)
-            receipts_values = list(receipts_data.values())
-            receipts_labels = list(receipts_data.keys())
-            receipts_chart_config = {  # NO TOTALE SEDI
-                "series": [
-                    {
-                        "name": "Scontrini",
-                        "data": receipts_values
-                    },
-                ],
-                "labels": receipts_labels
-            }
-            return JsonResponse(receipts_chart_config)
-        elif chart_type == 2:
-            entrances_data = generate_ingressi_branch_report(branch_id, start_date_str, end_date_str)
-            entrances_values = list(entrances_data.values())
-            entrances_labels = list(entrances_data.keys())
-            conversion_rate_date = generate_branch_report_conversion_rate(branch_id, start_date_str, end_date_str)
-            conversion_rate_values = list(conversion_rate_date.values())
-            entrances_chart_config = {  # NO TOTALE SEDI
-                "series": [
-                    {
-                        "name": "Ingressi",
-                        "data": entrances_values
-                    },
-                    {
-                        "name": "Tasso di Conversione",
-                        "data": conversion_rate_values
-                    },
-                ],
-                "labels": entrances_labels
-            }
-            return JsonResponse(entrances_chart_config)
         else:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
-    return JsonResponse({"status": "error", "errors": ["Invalid request method"]}, status=405)
+            config = build_chart_config(data, name, target)
+
+        return JsonResponse(config)
+
+    return JsonResponse(
+        {"status": "error", "errors": ["Invalid request method"]},
+        status=405
+    )
+
 
 @csrf_exempt
 def get_branch_employees_report(request, branch_id):
-    if request.method == 'GET':
-        # Get the query string parameters
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-            chart_type = data.get("chart", None)
-            # convert from DD-MM-YYYY to YYYY-MM-DD
-            start_date_str = data.get("startDate")
-            end_date_str = data.get("endDate")
-        except json.JSONDecodeError:
-            start_date = datetime.now() - timedelta(days=371)  # 7 days
-            end_date = datetime.now() - timedelta(days=365)
-            start_date_str = start_date.strftime('%Y-%m-%d')
-            end_date_str = end_date.strftime('%Y-%m-%d')
-            chart_type = None
+    """Handle employee performance reports"""
+    branch = get_branch(branch_id)
+    if not branch:
+        return JsonResponse(
+            {"status": "error", "errors": ["Invalid branch ID"]},
+            status=400
+        )
 
-        start_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-        end_date_obj = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        start_date_str = start_date_obj.strftime("%Y-%m-%d")
-        end_date_str = end_date_obj.strftime("%Y-%m-%d")
+    employees = Employee.objects.filter(branch_id=branch.id)
+    if not employees.exists():
+        return JsonResponse(
+            {"status": "error", "errors": ["No employees found"]},
+            status=400
+        )
 
+    try:
+        start_date, end_date = get_dates(request)
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"status": "error", "errors": ["Invalid date format"]},
+            status=400
+        )
 
-        sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
-        scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
-        number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
+    # Generate report data
+    report_data = {
+        'sales': generate_report_performance_sales(branch.id, start_date, end_date),
+        'scontrini': generate_report_performance_scontrini(branch.id, start_date, end_date),
+        'num_sales': generate_number_sales_performance(branch.id, start_date, end_date)
+    }
 
-        try:
-            branch_id = int(branch_id)
-        except ValueError:
-            return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
+    # Process averages
+    averages = {
+        'medium_sales': generate_medium_performance(report_data['sales']),
+        'medium_scontrini': generate_medium_performance(report_data['scontrini']),
+        'medium_num_sales': generate_medium_performance(report_data['num_sales'])
+    }
 
-        try:
-            employees = Employee.objects.filter(branch_id=branch_id)
-        except Branch.DoesNotExist:
-            return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
-
-        # Check if the branch has employees
-        if not employees.exists():
-            return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
-
-
-
-
-
-        medium_number_receipts = generate_medium_performance(scontrini_report_data)
-        medium_sales = generate_medium_performance(sales_report_data)
-        medium_number_sales = generate_medium_performance(number_sales_report_data)
-
-        '''
-        print("Sales Report Data:")
-        pprint(sales_report_data)
-        print("Scontrini Report Data:")
-        pprint(scontrini_report_data)
-        print("Number Sales Report Data:")
-        pprint(number_sales_report_data)
-
-        print("Medium Scontrini:")
-        pprint(medium_scontrini)
-        print("Medium Sales:")
-        pprint(medium_sales)
-        print("Medium Number Sales:")
-        pprint(medium_number_sales)
-        
-        
-        '''  # Uncomment for debugging
-        medium_sales_obj = {
-            'series': [],
-            'labels': []
-
-        }
-
-        for emp, values in number_sales_report_data.items():
-            employee_series = {
+    # Build response structure
+    response_data = {
+        'employees': {
+            'series': [
+                {'name': 'Media Pezzi Venduti', 'data': list(averages['medium_num_sales'].values())},
+                {'name': 'Scontrino Medio', 'data': list(averages['medium_sales'].values())},
+                {'name': 'Media Numero Scontrini', 'data': list(averages['medium_scontrini'].values())}
+            ],
+            'labels': [emp.get_full_name() for emp in employees]
+        },
+        'mediumNumberSales': {
+            'series': [{
                 'name': emp,
                 'data': values
-            }
-            medium_sales_obj['series'].append(employee_series)
-
-        # Create the main object for the response
-
-        medium_sales_obj['labels'] = [(start_date_obj + timedelta(n)).strftime("%Y-%m-%d") for n in range((end_date_obj-start_date_obj).days + 1)]
-
-        main_obj = {
-            'employees' : {
-                    'series': [
-                        {
-                            'name': 'Media Pezzi Venduti',
-                            'data' : list(medium_number_sales.values())
-                        },
-                        {
-                            'name': 'Scontrino Medio',
-                            'data': list(medium_sales.values())
-                        },
-                        {
-                            'name': 'Media Numero Scontrini',
-                            'data': list(medium_number_receipts.values())
-                        }
-                    ],
-
-                    'labels': [emp.get_full_name() for emp in employees]
-
-                    },
-            'mediumNumberSales' : medium_sales_obj
-
+            } for emp, values in report_data['num_sales'].items()],
+            'labels': [(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(n)).strftime("%Y-%m-%d")
+                       for n in range((datetime.strptime(end_date, "%Y-%m-%d") -
+                                       datetime.strptime(start_date, "%Y-%m-%d")).days + 1)]
         }
+    }
 
-        return JsonResponse({"status": "success", "data": main_obj})
-    elif request.method == 'POST':
-        # Get the query string parameters
-        data = json.loads(request.body.decode('utf-8'))
-        # 0 = sales, 1 = 1 scontrini, 2 = ingressi + conversion_rate,
-        chart_type = data.get("chart")
-        # convert from DD-MM-YYYY to YYYY-MM-DD
-        start_date_str = data.get("startDate")
-        end_date_str = data.get("endDate")
-        start_date_obj = datetime.strptime(start_date_str, "%d-%m-%Y").date()
-        end_date_obj = datetime.strptime(end_date_str, "%d-%m-%Y").date()
-        start_date_str = start_date_obj.strftime("%Y-%m-%d")
-        end_date_str = end_date_obj.strftime("%Y-%m-%d")
-
-        try:
-            branch_id = int(branch_id)
-        except ValueError:
-            return JsonResponse({"status": "error", "errors": ["Invalid branch ID"]}, status=400)
-
-        try:
-            employees = Employee.objects.filter(branch_id=branch_id)
-        except Branch.DoesNotExist:
-            return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
-
-        # Check if the branch has employees
-        if not employees.exists():
-            return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
-
-        sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
-        scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
-        number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
-
-
-        if chart_type == 0:
-            obj = {
-                'series': [],
-                'labels': []
-            }
-            for emp, values in number_sales_report_data.items():
-                employee_series = {
-                    'name': emp,
-                    'data': values
-                }
-                obj['series'].append(employee_series)
-            # Create the main object for the response
-
-            obj['labels'] = [emp.get_full_name() for emp in employees]
-            return JsonResponse({"status": "success", "data": obj}, status=200)
-        elif chart_type == 1:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
-        elif chart_type == 2:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
-        elif not chart_type:
-            pass
-        else:
-            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
-
-
+    return JsonResponse({"status": "success", "data": response_data})
