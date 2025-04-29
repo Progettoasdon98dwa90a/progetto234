@@ -212,17 +212,16 @@ def get_branch_employees_report(request, branch_id):
         }
 
         if chart_type == 0:
-            medium_number_sales = generate_medium_performance(number_sales_report_data)
-
-            for emp in employees:
+            obj = {
+                'series': [],
+                'labels': []
+            }
+            for emp, values in number_sales_report_data.items():
                 employee_series = {
-                    'name': emp.get_full_name(),
-                    'data': []
+                    'name': emp,
+                    'data': values
                 }
-                for date, value in medium_number_sales.items():
-                    employee_series['data'].append(value)
                 obj['series'].append(employee_series)
-
             # Create the main object for the response
 
             obj['labels'] = [emp.get_full_name() for emp in employees]
@@ -269,7 +268,6 @@ def get_branch_employees_report(request, branch_id):
             'labels': []
 
         }
-        print(number_sales_report_data)
 
         for emp, values in number_sales_report_data.items():
             employee_series = {
@@ -280,7 +278,6 @@ def get_branch_employees_report(request, branch_id):
 
         # Create the main object for the response
 
-        print(number_sales_report_data)
         medium_sales_obj['labels'] = [(start_date_obj + timedelta(n)).strftime("%Y-%m-%d") for n in range((end_date_obj-start_date_obj).days + 1)]
 
         main_obj = {
