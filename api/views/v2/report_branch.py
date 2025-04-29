@@ -13,7 +13,10 @@ from api.models import Branch, Employee
 
 # Constants
 TARGETS = {'sales': 200, 'scontrini': 100, 'ingressi': 100}
-CHART_TYPES = {'SALES': 0, 'RECEIPTS': 1, 'ENTRANCES': 2}
+
+
+BRANCH_CHART_TYPES = {'SALES': 0, 'RECEIPTS': 1, 'ENTRANCES': 2}
+EMPLOYEES_CHART_TYPES = {'SALES_PIECES': 3, 'RECEIPTS_COUNT': 4, 'RECEIPTS_AMOUNT': 5}
 
 
 def parse_date(date_str, format_from, format_to='%Y-%m-%d'):
@@ -30,8 +33,8 @@ def get_dates(request, default_days=7):
             return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
 
         data = json.loads(request.body.decode('utf-8'))
-        start_str = parse_date(data['startDate'], '%d-%m-%Y')
-        end_str = parse_date(data['endDate'], '%d-%m-%Y')
+        start_str = parse_date(data['startDate'], '%Y-%m-%d')
+        end_str = parse_date(data['endDate'], '%Y-%m-%d')
         return start_str, end_str
 
     except (KeyError, json.JSONDecodeError):
@@ -113,9 +116,9 @@ def get_branch_report(request, branch_id):
             )
 
         generators = {
-            CHART_TYPES['SALES']: (generate_branch_report_sales, "Incassi", TARGETS['sales']),
-            CHART_TYPES['RECEIPTS']: (generate_branch_report_scontrini, "Scontrini", None),
-            CHART_TYPES['ENTRANCES']: (generate_ingressi_branch_report, "Ingressi", None)
+            BRANCH_CHART_TYPES['SALES']: (generate_branch_report_sales, "Incassi", TARGETS['sales']),
+            BRANCH_CHART_TYPES['RECEIPTS']: (generate_branch_report_scontrini, "Scontrini", None),
+            BRANCH_CHART_TYPES['ENTRANCES']: (generate_ingressi_branch_report, "Ingressi", None)
         }
 
         if chart_type not in generators:
@@ -127,7 +130,7 @@ def get_branch_report(request, branch_id):
         generator, name, target = generators[chart_type]
         data = generator(branch.id, start_date, end_date)
 
-        if chart_type == CHART_TYPES['ENTRANCES']:
+        if chart_type == BRANCH_CHART_TYPES['ENTRANCES']:
             conversion_data = generate_branch_report_conversion_rate(
                 branch.id, start_date, end_date)
             config = {
@@ -172,6 +175,36 @@ def get_branch_employees_report(request, branch_id):
             {"status": "error", "errors": ["Invalid date format"]},
             status=400
         )
+
+    # get chart type
+    try:
+        chart_type = json.loads(request.body.decode('utf-8')).get("chart")
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"status": "error", "errors": ["Invalid request body"]},
+            status=400
+        )
+
+    if chart_type:
+        print("Chart Type:", chart_type)
+        generators = {
+            EMPLOYEES_CHART_TYPES['SALES_PIECES']: (generate_branch_report_sales, "Pezzi venduti", None),
+            EMPLOYEES_CHART_TYPES['RECEIPTS_COUNT']: (generate_branch_report_scontrini, "Numero Scontrini", None),
+            EMPLOYEES_CHART_TYPES['RECEIPTS_AMOUNT']: (generate_ingressi_branch_report, "Valore Totale Vendite", None)
+        }
+
+        if chart_type not in generators:
+            return JsonResponse(
+                {"status": "error", "errors": ["Invalid chart type"]},
+                status=400
+            )
+
+        generator, name, target = generators[int(chart_type)]
+        data = generator(branch.id, start_date, end_date)
+
+        config = build_chart_config(data, name, target)
+        return JsonResponse(config)
+
 
     # Generate report data
     report_data = {

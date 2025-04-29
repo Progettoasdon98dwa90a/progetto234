@@ -26,13 +26,13 @@ if __name__ == '__main__':
     django.setup()
 
     # Flush the database
-    call_command('flush', interactive=False)  # Flush the database
+    # call_command('flush', interactive=False)  # Flush the database
     print("OK FLUSH")
     # Run Django migrations
     call_command('migrate')
     print("OK MIGRATION")
     # Load initial data
-    call_command('seed')
+    # call_command('seed')
     print("OK SEED")
     call_command('collectstatic', interactive=False)
     print("OK CLLSTC")
