@@ -274,7 +274,7 @@ def get_branch_employees_report(request, branch_id):
                 'name': emp.get_full_name(),
                 'data': []
             }
-            for date, value in medium_number_sales.items():
+            for date, value in number_sales_report_data.items():
                 employee_series['data'].append(value)
             medium_sales_obj['series'].append(employee_series)
 
