@@ -1,8 +1,4 @@
 import json
-from pprint import pprint
-
-from django.db.models import F, Value
-from django.db.models.functions import Concat
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 
@@ -10,11 +6,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from api.formulas.averages import generate_medium_performance
 from api.formulas.counter import generate_ingressi_branch_report, generate_branch_report_conversion_rate
-from api.formulas.receipts import generate_branch_report_scontrini, get_scontrini_dipendente_date_range, \
-    get_scontrini_dipendente_single_date, generate_report_performance_scontrini
+from api.formulas.receipts import generate_branch_report_scontrini, generate_report_performance_scontrini
 from api.formulas.sales import generate_branch_report_sales, generate_report_performance_sales, \
     generate_number_sales_performance
-from api.models import Branch, Employee, Import
+from api.models import Branch, Employee
 
 
 @csrf_exempt
@@ -173,11 +168,30 @@ def get_branch_report(request, branch_id):
 
 def get_branch_employees_report(request, branch_id):
     if request.method == 'GET':
-        # fallback to start of the year until now
-        start_date = datetime.now().replace(month=1, day=1)
-        start_date_str = start_date.strftime("%Y-%m-%d")  # from start of the year
-        end_date = datetime.now()
-        end_date_str = end_date.strftime("%Y-%m-%d")
+        '''
+        start_date = datetime.now() - timedelta(days=371) # 7 days
+        end_date = datetime.now() - timedelta(days=300)
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        chart_type = 0
+        '''
+
+        # Get the query string parameters
+        data = json.loads(request.body.decode('utf-8'))
+        chart_type = data.get("chart")
+        # convert from DD-MM-YYYY to YYYY-MM-DD
+        start_date_str = data.get("startDate")
+        end_date_str = data.get("endDate")
+        start_date_obj = datetime.strptime(start_date_str, "%d-%m-%Y").date()
+        end_date_obj = datetime.strptime(end_date_str, "%d-%m-%Y").date()
+        start_date_str = start_date_obj.strftime("%Y-%m-%d")
+        end_date_str = end_date_obj.strftime("%Y-%m-%d")
+
+
+        sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
+        scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
+        number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
+
         try:
             branch_id = int(branch_id)
         except ValueError:
@@ -188,12 +202,50 @@ def get_branch_employees_report(request, branch_id):
         except Branch.DoesNotExist:
             return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
 
+        # Check if the branch has employees
+        if not employees.exists():
+            return JsonResponse({"status": "error", "errors": ["Branch has no employees"]}, status=400)
 
-        sales_report_data = generate_report_performance_sales(branch_id, start_date_str, end_date_str)
-        scontrini_report_data = generate_report_performance_scontrini(branch_id, start_date_str, end_date_str)
-        number_sales_report_data = generate_number_sales_performance(branch_id, start_date_str, end_date_str)
+        obj = {
+            'series': [],
+            'labels': []
+        }
 
-        medium_scontrini = generate_medium_performance(scontrini_report_data)
+        if chart_type == 0:
+            medium_number_sales = generate_medium_performance(number_sales_report_data)
+
+            for emp in employees:
+                employee_series = {
+                    'name': emp.get_full_name(),
+                    'data': []
+                }
+                for date, value in medium_number_sales.items():
+                    employee_series['data'].append(value)
+                obj['series'].append(employee_series)
+
+            # Create the main object for the response
+
+            obj['labels'] = [emp.get_full_name() for emp in employees]
+            return JsonResponse({"status": "success", "data": obj}, status=400)
+        elif chart_type == 1:
+            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
+        elif chart_type == 2:
+            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
+        elif not chart_type:
+            return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
+
+        if not start_date_str or not end_date_str:
+            # fallback to start of the year until now
+            start_date = datetime.now().replace(month=1, day=1)
+            start_date_str = start_date.strftime("%Y-%m-%d")  # from start of the year
+            end_date = datetime.now()
+            end_date_str = end_date.strftime("%Y-%m-%d")
+
+
+
+
+
+        medium_number_receipts = generate_medium_performance(scontrini_report_data)
         medium_sales = generate_medium_performance(sales_report_data)
         medium_number_sales = generate_medium_performance(number_sales_report_data)
 
@@ -228,13 +280,14 @@ def get_branch_employees_report(request, branch_id):
                     },
                     {
                         'name': 'Media Numero Scontrini',
-                        'data': list(medium_scontrini.values())
+                        'data': list(medium_number_receipts.values())
                     }
                 ],
 
             'labels': [emp.get_full_name() for emp in employees]
 
             }
+
         }
 
         return JsonResponse({"status": "success", "data": main_obj})
