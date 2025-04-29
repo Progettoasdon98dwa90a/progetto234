@@ -319,7 +319,7 @@ def get_branch_employees_report(request, branch_id):
             # Create the main object for the response
 
             obj['labels'] = [emp.get_full_name() for emp in employees]
-            return JsonResponse({"status": "success", "data": obj}, status=400)
+            return JsonResponse({"status": "success", "data": obj}, status=200)
         elif chart_type == 1:
             return JsonResponse({"status": "error", "errors": ["Invalid chart type"]}, status=400)
         elif chart_type == 2:
