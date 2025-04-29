@@ -188,9 +188,9 @@ def get_branch_employees_report(request, branch_id):
     if chart_type:
         print("Chart Type:", chart_type)
         generators = {
-            EMPLOYEES_CHART_TYPES['SALES_PIECES']: (generate_branch_report_sales, "Pezzi venduti", None),
-            EMPLOYEES_CHART_TYPES['RECEIPTS_COUNT']: (generate_branch_report_scontrini, "Numero Scontrini", None),
-            EMPLOYEES_CHART_TYPES['RECEIPTS_AMOUNT']: (generate_ingressi_branch_report, "Valore Totale Vendite", None)
+            EMPLOYEES_CHART_TYPES['SALES_PIECES']: (generate_report_performance_sales, "Pezzi venduti", None),
+            EMPLOYEES_CHART_TYPES['RECEIPTS_COUNT']: (generate_report_performance_scontrini, "Numero Scontrini", None),
+            EMPLOYEES_CHART_TYPES['RECEIPTS_AMOUNT']: (generate_number_sales_performance, "Valore Totale Vendite", None)
         }
 
         if chart_type not in generators:
