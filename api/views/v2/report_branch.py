@@ -275,20 +275,16 @@ def get_branch_employees_report(request, branch_id):
         return JsonResponse({"status": "success", "data": main_obj})
     elif request.method == 'POST':
         # Get the query string parameters
-        try:
-            chart_type = request.POST.get("chart", None)
-            # convert from DD-MM-YYYY to YYYY-MM-DD
-            start_date_str = request.POST.get("startDate", None)
-            end_date_str = request.POST.get("endDate", None)
-            print("startDate", start_date_str)
-            print("endDate", end_date_str)
-        except json.JSONDecodeError:
-            start_date = datetime.now() - timedelta(days=371)  # 7 days
-            end_date = datetime.now() - timedelta(days=365)
-            start_date_str = start_date.strftime('%Y-%m-%d')
-            end_date_str = end_date.strftime('%Y-%m-%d')
-            chart_type = None
-            print('error decoding body')
+        data = json.loads(request.body.decode('utf-8'))
+        # 0 = sales, 1 = 1 scontrini, 2 = ingressi + conversion_rate,
+        chart_type = data.get("chart")
+        # convert from DD-MM-YYYY to YYYY-MM-DD
+        start_date_str = data.get("startDate")
+        end_date_str = data.get("endDate")
+        start_date_obj = datetime.strptime(start_date_str, "%d-%m-%Y").date()
+        end_date_obj = datetime.strptime(end_date_str, "%d-%m-%Y").date()
+        start_date_str = start_date_obj.strftime("%Y-%m-%d")
+        end_date_str = end_date_obj.strftime("%Y-%m-%d")
 
         try:
             branch_id = int(branch_id)
