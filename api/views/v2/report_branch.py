@@ -182,8 +182,8 @@ def get_branch_employees_report(request, branch_id):
             end_date_str = end_date.strftime('%Y-%m-%d')
             chart_type = None
 
-        start_date_obj = datetime.strptime(start_date_str, "%d-%m-%Y").date()
-        end_date_obj = datetime.strptime(end_date_str, "%d-%m-%Y").date()
+        start_date_obj = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         start_date_str = start_date_obj.strftime("%Y-%m-%d")
         end_date_str = end_date_obj.strftime("%Y-%m-%d")
 
