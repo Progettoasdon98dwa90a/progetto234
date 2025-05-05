@@ -16,17 +16,14 @@ def target_grid(request):
         _, num_days = calendar.monthrange(now.year, now.month)
 
         last_day = now.replace(day=num_days, hour=23, minute=59, second=59, microsecond=999999).date()
-        print(first_day, last_day)
         all_branches = Branch.objects.all()
         all_monthly_targets = Target.objects.filter(start_date=first_day, end_date=last_day)
-        print(all_monthly_targets)
 
         grid_data = []
 
         for branch in all_branches:
             # Find the target for the current branch and month, default to None if not found
             target = all_monthly_targets.filter(branch=branch).first()
-            print(target.sales_target)
             # Prepare values, handling cases where a target might not exist or sales_target is null
 
             last_update_val = 1500.00 # mocked for now
