@@ -146,8 +146,11 @@ class Command(BaseCommand):
         target = 300
         start_date = "2025-05-01"
         end_date = "2025-05-31"
+        branch_obj_2 = Branch.objects.get(id=2)
         t1 = Target.objects.create(sales_target=target, start_date=start_date, end_date=end_date, branch=branch_obj)
+        t2 = Target.objects.create(sales_target=target, start_date=start_date, end_date=end_date, branch=branch_obj_2)
         t1.save()
+        t2.save()
 
         print(f"Target for {branch_obj.name} created successfully.")
 
