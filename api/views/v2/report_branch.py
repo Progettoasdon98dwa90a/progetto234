@@ -68,6 +68,28 @@ def build_chart_config(data, chart_type, target=None):
 
     return config
 
+def build_employee_chart_config(employee_data, target=None, start_date=None, end_date=None):
+    """Build standardized chart configuration"""
+
+    labels = [(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(n)).strftime("%Y-%m-%d")
+               for n in range((datetime.strptime(end_date, "%Y-%m-%d") -
+                               datetime.strptime(start_date, "%Y-%m-%d")).days + 1)]
+
+    config = {
+        "series": []
+    }
+    for key, data in employee_data.items():
+        config["series"].append({"name": key, "data": data})
+    config["labels"] = labels
+
+    if target:
+        config["series"].append({
+            "name": "Target",
+            "data": [target] * len(employee_data)
+        })
+
+    return config
+
 
 @csrf_exempt
 def get_branch_report(request, branch_id):
@@ -200,7 +222,7 @@ def get_branch_employees_report(request, branch_id):
         generator, name, target = generators[int(chart_type)]
         data = generator(branch.id, start_date, end_date)
 
-        config = build_chart_config(data, name, target)
+        config = build_employee_chart_config(data, target, start_date, end_date)
         return JsonResponse(config)
 
 
