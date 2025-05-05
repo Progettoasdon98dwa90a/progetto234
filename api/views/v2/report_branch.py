@@ -33,8 +33,8 @@ def get_dates(request, default_days=6):
             return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
         elif request.method == 'POST':
             data = json.loads(request.body.decode('utf-8'))
-            start_str = parse_date(data['startDate'], '%Y-%m-%d')
-            end_str = parse_date(data['endDate'], '%Y-%m-%d')
+            start_str = parse_date(data['startDate'], '%d-%m-%Y')
+            end_str = parse_date(data['endDate'], '%d-%m-%Y')
             return start_str, end_str
         else:
             return None, None
@@ -199,6 +199,7 @@ def get_branch_employees_report(request, branch_id):
         end_date_obj = datetime.now() - timedelta(days=365 + 1)
         start_date = start_date_obj.strftime('%Y-%m-%d')
         end_date = end_date_obj.strftime('%Y-%m-%d')
+        print('EXCEPTION')
 
     # get chart type
     try:
