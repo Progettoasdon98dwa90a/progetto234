@@ -110,3 +110,14 @@ class Import(models.Model):
 
     def __str__(self):
         return f"IMPORT #{self.id}"
+
+
+class Target(models.Model):
+
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    start_date = models.CharField(default="", max_length=100)
+    end_date = models.CharField(default="", max_length=100)
+    sales_target = models.FloatField(default=0.0)
+
+    def __str__(self):
+        return f"TARGET #{self.id}"

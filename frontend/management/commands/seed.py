@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 from django.core.management import call_command
 
 
-from api.models import Employee,Branch, Import, Schedule
+from api.models import Employee,Branch, Import, Schedule, Target
 
 current_directory = Path(__file__).resolve().parent.parent.parent.parent
 
@@ -142,4 +142,13 @@ class Command(BaseCommand):
                                     employees=employees, )
         s1.save()
         s2.save()
+
+        target = 300
+        start_date = "2025-05-01"
+        end_date = "2025-05-31"
+        t1 = Target.objects.create(sales_target=target, start_date=start_date, end_date=end_date, branch=branch_obj)
+        t1.save()
+
+        print(f"Target for {branch_obj.name} created successfully.")
+
         print("Schedule created successfully.")

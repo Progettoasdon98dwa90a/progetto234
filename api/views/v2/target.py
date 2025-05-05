@@ -1,0 +1,45 @@
+import calendar
+import datetime
+
+from django.http import JsonResponse
+
+from api.models import Branch, Target
+from decimal import Decimal # Good practice if sales_target is Decimal
+
+
+def target_grid(request):
+    if request.method == 'GET':
+        # first of current month to last of current month
+        now = datetime.datetime.now()
+
+        first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).date()
+        _, num_days = calendar.monthrange(now.year, now.month)
+
+        last_day = now.replace(day=num_days, hour=23, minute=59, second=59, microsecond=999999).date()
+        print(first_day, last_day)
+        all_branches = Branch.objects.all()
+        all_monthly_targets = Target.objects.filter(start_date=first_day, end_date=last_day)
+        print(all_monthly_targets)
+
+        grid_data = []
+
+        for branch in all_branches:
+            # Find the target for the current branch and month, default to None if not found
+            target = all_monthly_targets.filter(branch=branch).first()
+            print(target.sales_target)
+            # Prepare values, handling cases where a target might not exist or sales_target is null
+
+            last_update_val = 1500.00 # mocked for now
+
+            # Create the dictionary for this row
+            row_data = {
+                'id': branch.id,
+                'branch': branch.name,  # Corresponds to 'Sede'
+                'weeklyTarget': target.sales_target / 4,  # Calculated value or None/0
+                'monthlyTarget': target.sales_target,  # Target value or None/0
+                'lastUpdate': last_update_val,  # Formatted date/time string or None
+            }
+            grid_data.append(row_data)
+
+
+        return JsonResponse({'status': 'success', 'data': grid_data}, status=200)
