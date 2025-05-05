@@ -1,11 +1,14 @@
 import calendar
 import datetime
+import json
+import logging
 
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from api.models import Branch, Target
-from decimal import Decimal # Good practice if sales_target is Decimal
 
+logger = logging.getLogger(__name__)
 
 def target_grid(request):
     if request.method == 'GET':
@@ -23,11 +26,10 @@ def target_grid(request):
 
         # sum all sales_target from all_monthly targets
         GLOBAL_TARGET = sum(target.sales_target for target in all_monthly_targets)
-        print(f"GLOBAL_TARGET: {GLOBAL_TARGET}")
         # create a GLOBAL target ROW
         row_data = {
-            'id': 'GLOBAL',
-            'branch': 'GLOBAL',  # Corresponds to 'Sede'
+            'id': 'Globale',
+            'branch': 'Globale',  # Corresponds to 'Sede'
             'weeklyTarget': GLOBAL_TARGET / 4,  # Calculated value or None/0
             'monthlyTarget': GLOBAL_TARGET,  # Target value or None/0
             'lastUpdate': 15000,  # Formatted date/time string or None
@@ -51,8 +53,22 @@ def target_grid(request):
             }
             grid_data.append(row_data)
 
-
-        grid_data.append(row_data)
-
-
         return JsonResponse({'status': 'success', 'data': grid_data}, status=200)
+    elif request.method == 'POST':
+        try:
+            body = json.loads(request.body.decode('utf-8'))
+            branch_id = body.get('branchId')
+            new_target = body.get('targetValue')
+
+            target = Target.objects.get(branch_id=branch_id)
+            target.sales_target = new_target
+            target.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Target updated successfully'}, status=200)
+        except Target.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Target not found'}, status=404)
+        except Exception as e:
+            logger.error(f"Error updating target: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': 'Failed to update target'}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
