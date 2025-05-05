@@ -10,6 +10,7 @@ from api.models import Branch, Target
 
 logger = logging.getLogger(__name__)
 
+@csrf_exempt
 def target_grid(request):
     if request.method == 'GET':
         # first of current month to last of current month
