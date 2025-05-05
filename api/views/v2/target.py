@@ -21,6 +21,19 @@ def target_grid(request):
 
         grid_data = []
 
+        # sum all sales_target from all_monthly targets
+        GLOBAL_TARGET = sum(target.sales_target for target in all_monthly_targets)
+        print(f"GLOBAL_TARGET: {GLOBAL_TARGET}")
+        # create a GLOBAL target ROW
+        row_data = {
+            'id': 'GLOBAL',
+            'branch': 'GLOBAL',  # Corresponds to 'Sede'
+            'weeklyTarget': GLOBAL_TARGET / 4,  # Calculated value or None/0
+            'monthlyTarget': GLOBAL_TARGET,  # Target value or None/0
+            'lastUpdate': 15000,  # Formatted date/time string or None
+        }
+        grid_data.append(row_data)
+
         for branch in all_branches:
             # Find the target for the current branch and month, default to None if not found
             target = all_monthly_targets.filter(branch=branch).first()
@@ -37,6 +50,9 @@ def target_grid(request):
                 'lastUpdate': last_update_val,  # Formatted date/time string or None
             }
             grid_data.append(row_data)
+
+
+        grid_data.append(row_data)
 
 
         return JsonResponse({'status': 'success', 'data': grid_data}, status=200)
