@@ -172,8 +172,8 @@ def get_branch_employees_report(request, branch_id):
     try:
         start_date, end_date = get_dates(request)
     except (KeyError, json.JSONDecodeError, ValueError):
-        start_date_obj = datetime.now() - timedelta(days=6 + 1)
-        end_date_obj = datetime.now() - timedelta(days=1)
+        start_date_obj = datetime.now() - timedelta(days=365 + 6 + 1)
+        end_date_obj = datetime.now() - timedelta(days=365 + 1)
         start_date = start_date_obj.strftime('%Y-%m-%d')
         end_date = end_date_obj.strftime('%Y-%m-%d')
 
