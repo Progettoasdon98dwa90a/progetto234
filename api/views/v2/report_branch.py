@@ -236,7 +236,26 @@ def get_branch_employees_report(request, branch_id):
             'labels': [(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(n)).strftime("%Y-%m-%d")
                        for n in range((datetime.strptime(end_date, "%Y-%m-%d") -
                                        datetime.strptime(start_date, "%Y-%m-%d")).days + 1)]
+        },
+        'mediumValueSales': { # totale vendite dipendente di quel giorno / totale numero di vendite effettuate
+            'series': [{
+                'name': emp,
+                'data': values
+            } for emp, values in report_data['sales'].items()],
+            'labels': [(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(n)).strftime("%Y-%m-%d")
+                       for n in range((datetime.strptime(end_date, "%Y-%m-%d") -
+                                       datetime.strptime(start_date, "%Y-%m-%d")).days + 1)]
+        },
+        'receiptSales': { # totale numero di scontrini per quel dipendente
+            'series': [{
+                'name': emp,
+                'data': values
+            } for emp, values in report_data['scontrini'].items()],
+            'labels': [(datetime.strptime(start_date, "%Y-%m-%d") + timedelta(n)).strftime("%Y-%m-%d")
+                       for n in range((datetime.strptime(end_date, "%Y-%m-%d") -
+                                       datetime.strptime(start_date, "%Y-%m-%d")).days + 1)]
         }
+
     }
 
     return JsonResponse({"status": "success", "data": response_data})
