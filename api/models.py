@@ -127,6 +127,7 @@ class Target(models.Model):
 class ScheduleEvent(models.Model):
     schedule = models.ForeignKey('Schedule', on_delete=models.CASCADE, related_name="events")
     employee = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name="schedule_events")
+    date = models.CharField(default="", max_length=100)
     start_time = models.CharField(default="", max_length=100)
     end_time = models.CharField(default="", max_length=100)
     color = models.CharField(default="", max_length=100)
