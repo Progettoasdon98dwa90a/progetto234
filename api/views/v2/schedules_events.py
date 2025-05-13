@@ -55,7 +55,9 @@ def get_schedule_events(request, schedule_id):
     if request.method == 'GET':
         try:
             schedule_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
-            return JsonResponse({"status": "success"}, status=200)
+            events_data = [event.format_json() for event in schedule_events]
+            return JsonResponse({"status": "success", 'events': events_data}, status=200)
+        
         except ScheduleEvent.DoesNotExist:
             return JsonResponse({"status" : "error"}, status=404)
         except Exception as e:
