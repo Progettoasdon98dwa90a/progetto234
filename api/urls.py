@@ -56,7 +56,7 @@ urlpatterns = [
 
     path('turni/<int:branch_id>/', get_branch_schedules, name='GET_SCHEDULES'),
     path('turni/getEvents/<int:schedule_id>/', get_schedule_events, name='GET_SCHEDULE_EVENTS'),
-    path('turni/createEvent/<int:schedule_id>/', create_schedule_event, name='CREATE_SCHEDULE_EVENT')
+    path('turni/createEvent/<int:schedule_id>/', create_schedule_event, name='CREATE_SCHEDULE_EVENT'),
 
     path('dashboard/monthlyTarget/', target_grid, name='target_grid'),
 
