@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 @csrf_exempt
-def create_schedule_event(request):
+def create_schedule_event(request, schedule_id):
     if request.method != 'POST':
         return JsonResponse({"status" : "error"}, status=405)
     try:
@@ -12,7 +12,6 @@ def create_schedule_event(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
-    schedule_id = data.get('schedule_id')
     employee_id = data.get('employee_id')
     date = data.get('date')
     start_time = data.get('start_time')
