@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from api.models import ScheduleEvent
+from api.models import Employee, Schedule, ScheduleEvent
 from django.views.decorators.csrf import csrf_exempt
 import json
 
@@ -12,7 +12,17 @@ def create_schedule_event(request, schedule_id):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
-    employee_id = data.get('employeeId')
+    try:
+        schedule_id = int(schedule_id)
+        schedule = Schedule.objects.get(id=schedule_id)
+    except:
+        return JsonResponse({"status" : "error", 'message': 'Invalid schedule ID'}, status=400)
+    try:
+        employee_id = int(data.get('employeeId'))
+        employee = Employee.objects.get(id=employee_id)
+    except:
+        return JsonResponse({"status" : "error", 'message': 'Invalid employee ID'}, status=400)
+    
     date = data.get('date')
     start_time = data.get('startTime')
     end_time = data.get('endTime')
@@ -20,8 +30,8 @@ def create_schedule_event(request, schedule_id):
 
     try:
         schedule_event = ScheduleEvent.objects.create(
-            schedule_id=schedule_id, 
-            employee_id=employee_id, 
+            schedule=schedule, 
+            employee=employee, 
             date = date,
             start_time=start_time, 
             end_time=end_time, 
