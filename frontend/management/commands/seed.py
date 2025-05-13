@@ -127,6 +127,9 @@ class Command(BaseCommand):
 
             Import.objects.bulk_create(import_bulk_create_list)
             print(f"Import data created successfully for  {file_name}.")
+        
+        selected_branch = 1
+        branch_obj = Branch.objects.get(id=selected_branch)
 
         # get all branch employees
         employees = list(Employee.objects.filter(branch=branch_obj).values_list('id', flat=True))
