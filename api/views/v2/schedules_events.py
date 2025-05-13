@@ -4,23 +4,37 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 @csrf_exempt
-def create_schedule_event(request, schedule_id, employee_id, event, start_time, end_time, color):
+def create_schedule_event(request):
     if request.method != 'POST':
         return JsonResponse({"status" : "error"}, status=405)
-    if not all([schedule_id, employee_id, event, start_time, end_time, color]):
-        return JsonResponse({"status" : "error"}, status=500)
+    try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
     
+    schedule_id = data.get('schedule_id')
+    employee_id = data.get('employee_id')
+    date = data.get('date')
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
+    color = data.get('color')
+
     try:
         schedule_event = ScheduleEvent.objects.create(
             schedule_id=schedule_id, 
             employee_id=employee_id, 
-            event=event, 
-            start_datetime=start_time, 
-            end_datetime=end_time, color=color)
+            date = date,
+            start_time=start_time, 
+            end_time=end_time, 
+            color=color)
         
         schedule_event.save()
         print(f"Schedule event created successfully: {schedule_event}")
-        return JsonResponse({"status": "success"}, status=200)
+        # return all events of this schedule
+        all_schedule_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
+        events_data = [event.format_json() for event in all_schedule_events]
+
+        return JsonResponse({"status": "success", "events": events_data}, status=200)
     except Exception as e:
         print(f"Error creating schedule event: {e}")
         schedule_event = None
