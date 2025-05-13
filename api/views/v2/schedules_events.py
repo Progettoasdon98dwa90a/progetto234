@@ -12,10 +12,10 @@ def create_schedule_event(request, schedule_id):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
-    employee_id = data.get('employee_id')
+    employee_id = data.get('employeeId')
     date = data.get('date')
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
+    start_time = data.get('startTime')
+    end_time = data.get('endTime')
     color = data.get('color')
 
     try:
