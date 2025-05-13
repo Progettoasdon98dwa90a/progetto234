@@ -88,4 +88,24 @@ def get_schedule_events(request, schedule_id):
             return JsonResponse({"status" : "error", 'message': 'Error getting schedule events'}, status=500)
     else:
         return JsonResponse({"status" : "error", 'message': 'Invalid request method'}, status=405)
+
+
+def delete_schedule_event(request, schedule_id, event_id):
+    if request.method == 'DELETE':
+        try:
+            event_to_delete = ScheduleEvent.objects.get(id=event_id)
+            event_to_delete.delete()
+            print(f"Schedule event deleted successfully: {event_to_delete}")
+            # return all events of this schedule
+            all_schedule_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
+            events_data = [event.format_json() for event in all_schedule_events]
+
+            return JsonResponse({"status": "success", "events": events_data}, status=200)
+        except ScheduleEvent.DoesNotExist:
+            return JsonResponse({"status" : "error", 'message': 'Schedule event not found'}, status=404)
+        except Exception as e:
+            print(f"Error deleting schedule event: {e}")
+            return JsonResponse({"status" : "error", 'message': 'Error deleting schedule event'}, status=500)
+    else:
+        return JsonResponse({"status" : "error", 'message': 'Invalid request method'}, status=405)
     
