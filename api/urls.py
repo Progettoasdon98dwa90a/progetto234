@@ -14,7 +14,7 @@ from api.views.v2.imports import uploadImportData
 from api.views.v2.dashboard import dashboard_data
 from api.views.v2.report_employees import get_employees_report
 from api.views.v2.schedules import get_branch_schedules
-from api.views.v2.schedules_events import create_schedule_event
+from api.views.v2.schedules_events import create_schedule_event, get_schedule_events
 from api.views.v2.target import target_grid
 
 old_urlpatterns = [
