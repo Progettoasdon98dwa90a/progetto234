@@ -58,6 +58,7 @@ class Schedule(models.Model):
     free_days = models.JSONField(default=dict, blank=True)
 
     schedule_data = models.JSONField(default=dict, blank=True)
+    schedule_events = models.JSONField(default=dict, blank=True)
 
     processed = models.BooleanField(default=False)
 
@@ -121,3 +122,113 @@ class Target(models.Model):
 
     def __str__(self):
         return f"TARGET #{self.id}"
+
+
+class ScheduleEvent(models.Model):
+    schedule = models.ForeignKey('Schedule', on_delete=models.CASCADE, related_name="events")
+    employee = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name="schedule_events")
+    event = models.CharField(max_length=100, blank=True,
+                             help_text="Brief description of the event (e.g., 'Morning Shift', 'Meeting').")
+
+    # --- CRITICAL CHANGE: Use DateTimeField ---
+    # If your events are always within a single day and the Schedule model defines the date,
+    # you might use TimeField. But DateTimeField is more robust for general scheduling.
+    # Assuming USE_TZ = True in your settings.py for proper timezone handling.
+    start_datetime = models.DateTimeField(help_text="Start date and time of the event.")
+    end_datetime = models.DateTimeField(help_text="End date and time of the event.")
+
+    color = models.CharField(default="#3788D8", max_length=10, blank=True,
+                             help_text="Hex color code for the event display (e.g., #FF5733).")
+
+    class Meta:
+        ordering = ['start_datetime', 'employee']
+        # For more advanced database-level constraints (e.g., PostgreSQL):
+        # constraints = [
+        #     models.CheckConstraint(
+        #         check=models.Q(end_datetime__gt=models.F('start_datetime')),
+        #         name='end_datetime_after_start_datetime'
+        #     ),
+        #     # PostgreSQL specific: EXCLUDE constraint for non-overlapping times per employee
+        #     # This requires enabling the 'btree_gist' extension in PostgreSQL.
+        #     # models.UniqueConstraint(
+        #     #     fields=['employee'],
+        #     #     condition=..., # This is tricky, usually done with EXCLUDE USING gist
+        #     #     name='unique_employee_event_time_slot'
+        #     # )
+        # ]
+
+    def __str__(self):
+        return f"{self.event or 'Event'} for {self.employee} ({self.start_datetime.strftime('%Y-%m-%d %H:%M')} - {self.end_datetime.strftime('%H:%M')})"
+
+    @property
+    def duration(self):
+        """Returns the duration of the event as a timedelta object."""
+        if self.start_datetime and self.end_datetime:
+            return self.end_datetime - self.start_datetime
+        return None
+
+    def clean(self):
+        """
+        Custom validation for the model.
+        This is called by ModelForms and during full_clean().
+        """
+        super().clean()  # Call parent's clean first
+
+        # 1. Basic Validation: End time must be after start time
+        if self.start_datetime and self.end_datetime:
+            if self.start_datetime >= self.end_datetime:
+                raise ValidationError({
+                    'end_datetime': "End time must be after start time."
+                })
+
+            # Optional: Minimum event duration (e.g., 5 minutes)
+            # min_duration = timezone.timedelta(minutes=5)
+            # if (self.end_datetime - self.start_datetime) < min_duration:
+            #     raise ValidationError({
+            #         'end_datetime': f"Event duration must be at least {min_duration}."
+            #     })
+
+        # 2. Collision Detection for the SAME employee
+        #    Different employees CAN have events at the same time.
+        if self.employee and self.start_datetime and self.end_datetime:
+            # Query for existing events for this employee that overlap with the current event's time range.
+            # An overlap occurs if:
+            # (ExistingStart < NewEnd) AND (ExistingEnd > NewStart)
+            conflicting_events = ScheduleEvent.objects.filter(
+                employee=self.employee,
+                start_datetime__lt=self.end_datetime,  # Existing event starts before the new one ends
+                end_datetime__gt=self.start_datetime  # Existing event ends after the new one starts
+            )
+
+            # If we are updating an existing event, we must exclude ITSELF from the conflict check.
+            if self.pk:  # self.pk is None if this is a new object being created
+                conflicting_events = conflicting_events.exclude(pk=self.pk)
+
+            if conflicting_events.exists():
+                # Provide a more detailed error message
+                conflicts_details = []
+                for ce in conflicting_events:
+                    conflicts_details.append(
+                        f"'{ce.event or 'Unnamed Event'}' from {ce.start_datetime.strftime('%H:%M')} to {ce.end_datetime.strftime('%H:%M')} on {ce.start_datetime.strftime('%Y-%m-%d')}"
+                    )
+                raise ValidationError({
+                    'employee': f"This time slot for {self.employee.name if hasattr(self.employee, 'name') else self.employee} "
+                                f"conflicts with existing event(s): {'; '.join(conflicts_details)}."
+                })
+
+        # 3. Ensure event is within the Schedule's timeframe (if Schedule has one)
+        # Example: If your Schedule model has `start_date` and `end_date`
+        # if self.schedule and hasattr(self.schedule, 'start_date') and hasattr(self.schedule, 'end_date'):
+        #     if self.schedule.start_date and self.start_datetime.date() < self.schedule.start_date:
+        #         raise ValidationError({'start_datetime': "Event starts before the schedule's period."})
+        #     if self.schedule.end_date and self.end_datetime.date() > self.schedule.end_date:
+        #         raise ValidationError({'end_datetime': "Event ends after the schedule's period."})
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure clean() is called.
+        Note: clean() is not called automatically by save() unless you're using a ModelForm.
+        For direct model saves, it's good practice to call full_clean().
+        """
+        self.full_clean()  # This will call the clean() method
+        super().save(*args, **kwargs)

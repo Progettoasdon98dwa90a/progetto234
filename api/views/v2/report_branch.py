@@ -8,8 +8,7 @@ from api.formulas.counter import generate_ingressi_branch_report, generate_branc
 from api.formulas.receipts import generate_branch_report_scontrini, generate_report_performance_scontrini
 from api.formulas.sales import generate_branch_report_sales, generate_report_performance_sales, \
     generate_number_sales_performance
-from api.models import Branch, Employee
-
+from api.models import Branch, Employee, Target
 
 # Constants
 TARGETS = {'sales': 200, 'scontrini': 100, 'ingressi': 100}
@@ -101,13 +100,19 @@ def get_branch_report(request, branch_id):
             status=400
         )
 
+    try:
+        target = Target.objects.get(branch=branch)
+    except Target.DoesNotExist:
+        target = None
+
+
     if request.method == 'GET':
         start_date, end_date = get_dates(request, 6)
         report_data = {
             "sales": build_chart_config(
                 generate_branch_report_sales(branch.id, start_date, end_date),
                 "Incassi",
-                TARGETS['sales']
+                target.sales_target
             ),
             "receipts": build_chart_config(
                 generate_branch_report_scontrini(branch.id, start_date, end_date),
