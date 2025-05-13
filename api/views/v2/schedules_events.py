@@ -20,7 +20,8 @@ def create_schedule_event(request, schedule_id):
     try:
         employee_id = int(data.get('employeeId'))
         employee = Employee.objects.get(id=employee_id)
-    except:
+    except Exception as e:
+        print(e)
         return JsonResponse({"status" : "error", 'message': 'Invalid employee ID'}, status=400)
     
     date = data.get('date')
