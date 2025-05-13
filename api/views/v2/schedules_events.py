@@ -28,6 +28,7 @@ def create_schedule_event(request, schedule_id):
         try:
             event_to_update_id = int(data.get('id'))
             event_to_update = ScheduleEvent.objects.get(id=event_to_update_id)
+            event_to_update.employee = employee
             event_to_update.date = data.get('date', event_to_update.date)
             event_to_update.start_time = data.get('startTime', event_to_update.start_time)
             event_to_update.end_time = data.get('endTime', event_to_update.end_time)
