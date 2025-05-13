@@ -28,10 +28,10 @@ def create_schedule_event(request, schedule_id):
         try:
             event_to_update_id = int(data.get('id'))
             event_to_update = ScheduleEvent.objects.get(id=event_to_update_id)
-            event_to_update.date = data.get('date')
-            event_to_update.start_time = data.get('startTime')
-            event_to_update.end_time = data.get('endTime')
-            event_to_update.color = data.get('color')
+            event_to_update.date = data.get('date', event_to_update.date)
+            event_to_update.start_time = data.get('startTime', event_to_update.start_time)
+            event_to_update.end_time = data.get('endTime', event_to_update.end_time)
+            event_to_update.color = data.get('color', event_to_update.color)
             event_to_update.save()
             print(f"Schedule event updated successfully: {event_to_update}")
             # return all events of this schedule
@@ -43,10 +43,13 @@ def create_schedule_event(request, schedule_id):
             print(f"Error updating schedule event: {e}")
             return JsonResponse({"status" : "error", 'message': 'Error updating schedule event'}, status=500)
     
-    date = data.get('date')
-    start_time = data.get('startTime')
-    end_time = data.get('endTime')
-    color = data.get('color')
+    date = data.get('date', None)
+    start_time = data.get('startTime', None)
+    end_time = data.get('endTime', None)
+    color = data.get('color', None)
+
+    if not all([date, start_time, end_time, color]):
+        return JsonResponse({"status" : "error", 'message': 'Missing required fields'}, status=400)
 
     try:
         schedule_event = ScheduleEvent.objects.create(
