@@ -134,8 +134,8 @@ class ScheduleEvent(models.Model):
     # If your events are always within a single day and the Schedule model defines the date,
     # you might use TimeField. But DateTimeField is more robust for general scheduling.
     # Assuming USE_TZ = True in your settings.py for proper timezone handling.
-    start_datetime = models.DateTimeField(help_text="Start date and time of the event.")
-    end_datetime = models.DateTimeField(help_text="End date and time of the event.")
+    start_datetime = models.DateTimeField(help_text="Start date and time of the event.", blank=True, null=True)
+    end_datetime = models.DateTimeField(help_text="End date and time of the event.", blank=True, null=True)
 
     color = models.CharField(default="#3788D8", max_length=10, blank=True,
                              help_text="Hex color code for the event display (e.g., #FF5733).")
