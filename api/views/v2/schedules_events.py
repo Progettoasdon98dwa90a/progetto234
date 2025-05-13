@@ -23,6 +23,25 @@ def create_schedule_event(request, schedule_id):
     except Exception as e:
         print(e)
         return JsonResponse({"status" : "error", 'message': 'Invalid employee ID'}, status=400)
+
+    if data.get('id'):
+        try:
+            event_to_update_id = int(data.get('id'))
+            event_to_update = ScheduleEvent.objects.get(id=event_to_update_id)
+            event_to_update.date = data.get('date')
+            event_to_update.start_time = data.get('startTime')
+            event_to_update.end_time = data.get('endTime')
+            event_to_update.color = data.get('color')
+            event_to_update.save()
+            print(f"Schedule event updated successfully: {event_to_update}")
+            # return all events of this schedule
+            all_schedule_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
+            events_data = [event.format_json() for event in all_schedule_events]
+
+            return JsonResponse({"status": "success", "events": events_data, "scope": "update"}, status=200)
+        except Exception as e:
+            print(f"Error updating schedule event: {e}")
+            return JsonResponse({"status" : "error", 'message': 'Error updating schedule event'}, status=500)
     
     date = data.get('date')
     start_time = data.get('startTime')
