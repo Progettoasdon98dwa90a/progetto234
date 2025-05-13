@@ -48,7 +48,7 @@ def create_schedule_event(request, schedule_id):
     except Exception as e:
         print(f"Error creating schedule event: {e}")
         schedule_event = None
-        return JsonResponse({"status" : "error"}, status=500)
+        return JsonResponse({"status" : "error", 'message': 'Error creating schedule event'}, status=500)
     
 
 def get_schedule_events(request, schedule_id):
@@ -59,10 +59,10 @@ def get_schedule_events(request, schedule_id):
             return JsonResponse({"status": "success", 'events': events_data}, status=200)
         
         except ScheduleEvent.DoesNotExist:
-            return JsonResponse({"status" : "error"}, status=404)
+            return JsonResponse({"status" : "error", 'message': 'Schedule events not found'}, status=404)
         except Exception as e:
             print(f"Error getting schedule events: {e}")
-            return JsonResponse({"status" : "error"}, status=500)
+            return JsonResponse({"status" : "error", 'message': 'Error getting schedule events'}, status=500)
     else:
-        return JsonResponse({"status" : "error"}, status=405)
+        return JsonResponse({"status" : "error", 'message': 'Invalid request method'}, status=405)
     

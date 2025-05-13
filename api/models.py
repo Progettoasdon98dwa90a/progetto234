@@ -135,7 +135,7 @@ class ScheduleEvent(models.Model):
     def format_json(self):
         data= {
             'id': self.id,
-            'employeeId': self.employee.get_full_name(),
+            'employeeId': self.employee.id,
             'date': self.date,
             'startTime': self.start_time,
             'endTime': self.end_time,
