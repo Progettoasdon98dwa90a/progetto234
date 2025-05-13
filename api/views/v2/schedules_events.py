@@ -1,16 +1,16 @@
 from django.http import JsonResponse
 from api.models import ScheduleEvent
 from django.views.decorators.csrf import csrf_exempt
-
+import json
 
 @csrf_exempt
 def create_schedule_event(request):
     if request.method != 'POST':
         return JsonResponse({"status" : "error"}, status=405)
     try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
     
     schedule_id = data.get('schedule_id')
     employee_id = data.get('employee_id')
