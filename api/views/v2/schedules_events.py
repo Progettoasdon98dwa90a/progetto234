@@ -89,7 +89,7 @@ def get_schedule_events(request, schedule_id):
     else:
         return JsonResponse({"status" : "error", 'message': 'Invalid request method'}, status=405)
 
-
+@csrf_exempt
 def delete_schedule_event(request, schedule_id, event_id):
     if request.method == 'DELETE':
         try:
