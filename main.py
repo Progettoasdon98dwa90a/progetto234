@@ -1,3 +1,5 @@
+import os
+
 import django
 from gunicorn.app.base import BaseApplication
 from django.core.wsgi import get_wsgi_application
@@ -25,15 +27,19 @@ if __name__ == '__main__':
     # Set the Django settings module
     django.setup()
 
-    # Flush the database
-    # call_command('flush', interactive=False)  # Flush the database
-    print("OK FLUSH")
+    if os.getenv('DJANGO_SEED') == 'True':
+        # Flush the database
+        # call_command('flush', interactive=False)  # Flush the database
+        print("OK FLUSH")
+
     # Run Django migrations
     call_command('migrate')
     print("OK MIGRATION")
-    # Load initial data
-    # call_command('seed')
-    print("OK SEED")
+    if os.getenv('DJANGO_SEED') == 'True':
+        # Load initial data
+        call_command('seed')
+        print("OK SEED")
+
     call_command('collectstatic', interactive=False)
     print("OK CLLSTC")
 
