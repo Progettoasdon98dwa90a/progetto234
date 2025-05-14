@@ -1,4 +1,8 @@
-from django.db import models
+import json
+from pathlib import Path
+
+from django.conf import settings
+from django.db import models, transaction
 
 from django.core.exceptions import ValidationError
 
@@ -57,8 +61,7 @@ class Schedule(models.Model):
     closing_days = models.JSONField(default=dict, blank=True)
     free_days = models.JSONField(default=dict, blank=True)
 
-    schedule_data = models.JSONField(default=dict, blank=True)
-    schedule_events = models.JSONField(default=dict, blank=True)
+    can_modify = models.BooleanField(default=False)
 
     processed = models.BooleanField(default=False)
 
@@ -132,6 +135,249 @@ class Schedule(models.Model):
             "services": services_data
         }
         return payload
+
+    def backup_to_json(self):
+        """
+        Backs up specified fields of the Schedule instance AND its related events
+        to a JSON file.
+        """
+        if not hasattr(settings, 'SCHEDULES_BACKUP_DIR'):
+             raise AttributeError("settings.BACKUP_DIR is not configured.")
+
+        backup_dir = Path(settings.SCHEDULES_BACKUP_DIR) # Convert to pathlib.Path for easy handling
+
+        try:
+            backup_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            print(f"Error creating backup directory {backup_dir}: {e}")
+            raise
+
+        # Fields from the Schedule model itself
+        fields_to_backup_schedule = [
+            'id',
+            'branch_id',
+            'employees',
+            'start_date',
+            'end_date',
+            'shift_data',
+            'closing_days',
+            'free_days',
+            'can_modify',
+            'processed', # Exclude schedule_events JSONField if ScheduleEvent model is canonical
+        ]
+
+        # Create the dictionary for the main Schedule data
+        backup_data = {field: getattr(self, field) for field in fields_to_backup_schedule}
+
+        # --- Backup Related ScheduleEvent objects ---
+        related_events_data = []
+        # Fetch all related ScheduleEvent objects
+        # The 'events' is the related_name on the ForeignKey in ScheduleEvent
+        related_events = self.events.all()
+
+        # Define which fields to back up for each related event
+        # Exclude the 'id' and the ForeignKey back to Schedule ('schedule_id' or 'schedule')
+        fields_to_backup_event = [
+             'date', 'start_time', 'end_time', 'employee', 'color' # Add other fields from ScheduleEvent, use _id for FKs
+        ]
+
+        for event in related_events:
+            event_data = {}
+            for field in fields_to_backup_event:
+                 # Safely get the attribute value, handling potential errors
+                 try:
+                     value = getattr(event, field)
+                     # Handle non-JSON serializable types like datetime if necessary
+                     # For simple types and FK IDs this is usually fine.
+                     # If you have complex types, you might need custom serialization here.
+                     if isinstance(value, models.Model): # Should not happen if using _id
+                         value = value.id
+                     elif hasattr(value, 'isoformat'): # Basic datetime handling
+                          value = value.isoformat()
+                     event_data[field] = value
+                 except AttributeError:
+                      print(f"Warning: Field '{field}' not found on ScheduleEvent {event.id} during backup.")
+                 except Exception as e:
+                      print(f"Warning: Could not get field '{field}' from ScheduleEvent {event.id} during backup. Error: {e}")
+
+            related_events_data.append(event_data)
+
+        # Add the list of related events to the main backup dictionary
+        backup_data['related_events_data'] = related_events_data
+
+
+        # --- Write to file ---
+        backup_filename = f"{self.id}.json"
+        backup_path = backup_dir / backup_filename
+
+        try:
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                # Use json.dump with default handler for datetime if needed
+                json.dump(backup_data, f, indent=4) # If you added complex types, you might need default=str or a custom handler
+
+            print(f"Backup saved to {backup_path}")
+
+        except (OSError, TypeError) as e:
+             print(f"Error saving backup to {backup_path}: {e}")
+             raise
+
+        return backup_path
+
+    def restore_from_json(self):
+        """
+        Restores the fields of the current Schedule instance and its related events
+        from a JSON backup file.
+
+        This method will DELETE all existing related events for this Schedule
+        instance and recreate them from the backup data.
+        """
+        backup_dir = Path(settings.SCHEDULES_BACKUP_DIR) # Convert to pathlib.Path for easy handling
+        backup_path = backup_dir / f"{self.id}.json"
+
+        if not backup_path.exists():
+            raise FileNotFoundError(f"Backup file not found: {backup_path}")
+
+        try:
+            with open(backup_path, 'r', encoding='utf-8') as f:
+                backup_data = json.load(f)
+
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from {backup_path}: {e}")
+            raise
+        except OSError as e:
+             print(f"Error reading backup file {backup_path}: {e}")
+             raise
+
+        # --- Process the data for updating the *current* instance and related events ---
+        # Use a transaction to ensure atomic database operations
+        try:
+            with transaction.atomic():
+                # 1. Handle the main Schedule instance fields
+                branch_id = backup_data.pop('branch_id', None)
+
+                if branch_id is None:
+                     raise KeyError(f"Backup data from {backup_path} is missing the required 'branch_id' field.")
+
+                try:
+                    branch_instance = Branch.objects.get(id=branch_id)
+                    self.branch = branch_instance
+                except Branch.DoesNotExist:
+                    print(f"Branch with ID {branch_id} from backup {backup_path} does not exist in the database.")
+                    raise Branch.DoesNotExist(f"Cannot restore Schedule {self.id}: Branch ID {branch_id} not found.")
+                except Exception as e:
+                     print(f"An unexpected error occurred while looking up Branch ID {branch_id} from {backup_path} for Schedule {self.id}: {e}")
+                     raise
+
+                # Ignore the original 'id' field
+                backup_data.pop('id', None)
+                # Ignore the 'related_events_data' key as we handle it separately
+                related_events_data = backup_data.pop('related_events_data', None)
+                # Ignore the original schedule_events JSONField if ScheduleEvent model is canonical
+                backup_data.pop('schedule_events', None)
+
+
+                # Update remaining fields on the current instance (self)
+                for field_name, value in backup_data.items():
+                    if hasattr(self, field_name):
+                         try:
+                             setattr(self, field_name, value)
+                         except Exception as e:
+                              print(f"Warning: Could not set field '{field_name}' on Schedule {self.id} from backup {backup_path}. Error: {e}")
+                    else:
+                         print(f"Warning: Field '{field_name}' found in backup {backup_path} but not on Schedule model {self.id}. Skipping.")
+
+                # Save the updated Schedule instance
+                self.save()
+                print(f"Main Schedule {self.id} fields updated.")
+
+
+                # --- Restore Related ScheduleEvent objects ---
+                if related_events_data is not None and isinstance(related_events_data, list):
+                    # CRITICAL: Delete existing related events for this schedule
+                    # This ensures a clean restore state matching the backup
+                    print(f"Deleting existing related events for Schedule {self.id}...")
+                    self.events.all().delete() # Using the related_name 'events'
+
+                    print(f"Restoring {len(related_events_data)} related events from backup...")
+                    restored_event_ids = [] # Optional: keep track of restored event IDs if needed
+                    for i, event_backup_data in enumerate(related_events_data):
+                        try:
+                            # Create a dictionary for the new event instance
+                            new_event_data = {}
+                            # Set the ForeignKey to the current Schedule instance
+                            new_event_data['schedule'] = self
+
+                            # Copy data from the backup, handling potential FK lookups
+                            for field_name, value in event_backup_data.items():
+                                 # Handle FKs like employee_id - need to fetch the object
+                                 if field_name == 'employee':
+                                     try:
+                                         employee = Employee.objects.get(id=value)
+                                         new_event_data[field_name] = employee
+                                     except Employee.DoesNotExist:
+                                         print(f"Employee with ID {value} from backup for Schedule {self.id} event #{i+1} does not exist in the database. Skipping.")
+                                     except Exception as e:
+                                          print(f"An unexpected error occurred while looking up Employee ID {value} from {backup_path} for Schedule {self.id} event #{i+1}: {e}")
+                                          raise
+
+
+                                 elif field_name == 'id':
+                                      # Ignore the original event ID
+                                      pass
+                                 elif field_name == 'schedule' or field_name == 'schedule_id':
+                                      # Ignore the old schedule link
+                                      pass
+                                 else:
+                                      # Handle regular fields (CharField, JSONField, etc.)
+                                      if hasattr(ScheduleEvent, field_name): # Check if the field exists on the target model
+                                           try:
+                                                new_event_data[field_name] = value
+                                           except Exception as e:
+                                                print(f"Warning: Could not set field '{field_name}' on new ScheduleEvent for Schedule {self.id} event #{i+1} from backup. Error: {e}. Skipping field.")
+                                      else:
+                                           print(f"Warning: Field '{field_name}' found in event backup data for Schedule {self.id} event #{i+1} but not on ScheduleEvent model. Skipping.")
+
+
+                            # Create the new ScheduleEvent instance
+                            # Use .objects.create within the transaction
+                            new_event = ScheduleEvent.objects.create(**new_event_data)
+                            restored_event_ids.append(new_event.id)
+                            # print(f"Created ScheduleEvent {new_event.id}") # Optional detail logging
+
+                        except ValidationError as e:
+                            print(f"Data validation error creating ScheduleEvent for Schedule {self.id} event #{i+1}: {e}")
+                            # Depending on severity, you might want to raise here or continue and log
+                            # For now, just print and continue to try the next event
+                        except Exception as e:
+                            print(f"An unexpected error occurred creating ScheduleEvent for Schedule {self.id} event #{i+1} from backup data: {event_backup_data}. Error: {e}")
+                            # Again, decide if this should stop the whole transaction or just skip this event
+
+
+                    print(f"Finished restoring related events for Schedule {self.id}. Created {len(restored_event_ids)} events.")
+                elif related_events_data is not None:
+                     print(f"Warning: 'related_events_data' key in backup {backup_path} was not a list. Skipping related event restore.")
+                else:
+                     print(f"No 'related_events_data' found in backup {backup_path} for Schedule {self.id}. No related events to restore.")
+
+
+                print(f"Successfully restored/updated Schedule {self.id} and related events from {backup_path}")
+
+                # Return the updated instance (self)
+                return self
+
+        except ValidationError as e:
+             print(f"Data validation error during restore from {backup_path} for Schedule {self.id}: {e}")
+             raise
+        except KeyError as e:
+             print(f"Missing required data field during restore from {backup_path} for Schedule {self.id}: {e}")
+             raise
+        except (Branch.DoesNotExist, ScheduleEvent.DoesNotExist, Employee.DoesNotExist, transaction.TransactionManagementError) as e:
+             # Catch DoesNotExist for related models if you added lookups
+             print(f"A related object lookup failed during restore: {e}")
+             raise
+        except Exception as e:
+             print(f"An unexpected error occurred during the restore process for Schedule {self.id} from {backup_path}: {e}")
+             raise
 
 
 class Import(models.Model):

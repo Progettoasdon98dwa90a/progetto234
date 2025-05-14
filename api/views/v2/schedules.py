@@ -27,4 +27,29 @@ def get_branch_schedules(request, branch_id):
 def start_schedule(request, schedule_id):
     if request.method == 'POST':
         create_schedule.defer(schedule_id=schedule_id)
-        return JsonResponse({"success": True})
+        return JsonResponse({"success": True}, status=200)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+def backup_schedule(request, schedule_id):
+    if request.method == 'GET':
+        try:
+            schedule = Schedule.objects.get(id=schedule_id)
+            schedule.backup_to_json()
+            schedule.can_modify = True
+            schedule.save(update_fields=['can_modify'])
+        except Schedule.DoesNotExist:
+            return JsonResponse({"error": "Schedule not found"}, status=404)
+        return JsonResponse({"success": True}, status=200)
+
+
+def restore_schedule(request, schedule_id):
+    if request.method == 'GET':
+        try:
+            schedule = Schedule.objects.get(id=schedule_id)
+            schedule.restore_from_json()
+            schedule.save(update_fields=['can_modify'])
+        except Schedule.DoesNotExist:
+            return JsonResponse({"error": "Schedule not found"}, status=404)
+        return JsonResponse({"success": True}, status=200)

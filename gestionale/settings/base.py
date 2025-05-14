@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+SCHEDULES_BACKUP_DIR = BASE_DIR / 'schedules_backups'
 
 
 # Quick-start development settings - unsuitable for production

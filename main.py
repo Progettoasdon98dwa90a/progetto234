@@ -4,6 +4,29 @@ import django
 from gunicorn.app.base import BaseApplication
 from django.core.wsgi import get_wsgi_application
 from django.core.management import call_command
+import dj_database_url
+import psycopg2
+
+
+def reset_schema():
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        raise Exception("DATABASE_URL environment variable not set")
+
+    db = dj_database_url.parse(db_url)
+
+    conn = psycopg2.connect(
+        dbname=db.get('NAME'), # Use .get() for safety
+        user=db.get('USER'),
+        password=db.get('PASSWORD'),
+        host=db.get('HOST'),
+        port=db.get('PORT'),
+    )
+    conn.autocommit = True
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA public CASCADE;")
+        cur.execute("CREATE SCHEMA public;")
+    conn.close()
 
 
 class StandaloneApplication(BaseApplication):
@@ -28,9 +51,8 @@ if __name__ == '__main__':
     django.setup()
 
     if os.getenv('DJANGO_SEED') == 'True':
-        # Flush the database
-        # call_command('flush', interactive=False)  # Flush the database
-        print("OK FLUSH")
+        reset_schema()
+        print("OK RESET SCHEMA")
 
     # Run Django migrations
     call_command('migrate')
