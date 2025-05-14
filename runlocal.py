@@ -12,8 +12,10 @@ def main():
 
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestionale.settings.local')
     os.environ.setdefault('SECRET_KEY', 'django-insecure-2b7l^qo9t-8u8)5b4n0$%3b*3w0u$)g4$%z*!s%v7_1&2jx1')
+    os.environ.setdefault('POSTGRES', 'True')
+    os.environ.setdefault('DATABASE_URL', 'postgresql://localhost:5432/postgres?user=postgres&password=12345678')
 
-    SEED_DATA = True
+    SEED_DATA = False
 
     import django
     django.setup()
@@ -35,11 +37,12 @@ def main():
 
     call_command('collectstatic', interactive=False)
     print("Static files collected successfully.")
-
-
+    import threading
 
     # Run the Django development server
     call_command('runserver', '0.0.0.0:8000')
+    print("Server started successfully.")
+
 
 
 if __name__ == "__main__":

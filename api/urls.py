@@ -13,7 +13,7 @@ from api.views.v2.imports import getHistory
 from api.views.v2.imports import uploadImportData
 from api.views.v2.dashboard import dashboard_data
 from api.views.v2.report_employees import get_employees_report
-from api.views.v2.schedules import get_branch_schedules
+from api.views.v2.schedules import get_branch_schedules, start_schedule
 from api.views.v2.schedules_events import create_schedule_event, get_schedule_events, delete_schedule_event
 from api.views.v2.target import target_grid
 
@@ -55,6 +55,9 @@ urlpatterns = [
     path('dipendenti/<int:branch_id>/updateEmployeeRestDays/<int:employee_id>/', set_employee_rest_days, name='SET_EMPLOYEE_REST_DAYS'),
 
     path('turni/<int:branch_id>/', get_branch_schedules, name='GET_SCHEDULES'),
+    path('turni/createSchedule/<int:branch_id>/', get_branch_schedules, name='CREATE_SCHEDULE'),
+    path('turni/deleteSchedule/<int:schedule_id>/', get_branch_schedules, name='DELETE_SCHEDULE'),
+    path('turni/startSchedule/<int:schedule_id>/', start_schedule, name='START_SCHEDULE'),
     path('turni/getEvents/<int:schedule_id>/', get_schedule_events, name='GET_SCHEDULE_EVENTS'),
     path('turni/createEvent/<int:schedule_id>/', create_schedule_event, name='CREATE_SCHEDULE_EVENT'),
     path('turni/deleteEvent/<int:schedule_id>/<int:event_id>/', delete_schedule_event, name='DELETE_SCHEDULE_EVENT'),

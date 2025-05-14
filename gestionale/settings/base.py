@@ -32,13 +32,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'frontend',
     'api',
     'corsheaders',
     'django_tables2',
     'crispy_forms',
     'crispy_bootstrap4',
     'widget_tweaks',
+    "procrastinate.contrib.django",
 
 ]
 
@@ -82,7 +82,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'frontend.context_processors.get_branches',
             ],
         },
     },
@@ -135,3 +134,29 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MASTERPLAN_APP = '127.0.0.1'
+MASTERPLAN_PORT = '80'
+
+LOGGING = {
+    "version": 1,
+    "formatters": {
+        "procrastinate": {
+            "format": "%(asctime)s %(levelname)-7s %(name)s %(message)s"
+        },
+    },
+    "handlers": {
+        "procrastinate": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "procrastinate",
+        },
+    },
+    "loggers": {
+        "procrastinate": {
+            "handlers": ["procrastinate"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}

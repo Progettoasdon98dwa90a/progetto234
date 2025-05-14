@@ -19,7 +19,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["progetto234-production-4b44.up.railway.app"]
 CORS_ALLOW_ALL_ORIGINS = True
-MASTERPLAN_APP = os.getenv('MASTERPLAN_APP')
+
 SESSION_COOKIE_HTTPONLY = True  # ✔️ Enable for security
 SESSION_COOKIE_SAMESITE = 'Lax'  # ✔️ Add this
 SESSION_COOKIE_DOMAIN = '.progetto234-production-4b44.up.railway.app'  # ✔️ Wildcard domain

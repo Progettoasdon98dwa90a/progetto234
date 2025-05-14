@@ -11,8 +11,6 @@ from api.models import Schedule, Employee, Branch
 
 @csrf_exempt
 def new_schedule(request):
-
-
     if request.method == 'POST':
         data = json.loads(request.body)
         start_date = data.get('start_date')

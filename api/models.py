@@ -101,6 +101,38 @@ class Schedule(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def create_payload(self):
+        employee_data = {}
+        services_data = {}
+        shifts_data = {}
+        employees_qs = Employee.objects.filter(id__in=self.employees)
+        for employee_id in self.employees:
+            employee = employees_qs.get(id=employee_id)
+            employee_data[employee.id] = {
+                "id": employee.id,
+                "max_hours_per_day": employee.max_hours_per_day,
+                "max_services_per_week": 99,
+                "max_hours_per_week": employee.max_hours_per_week,
+                "max_hours_per_month": employee.max_hours_per_month
+            }
+
+        for shift_data in self.shift_data:
+            service_data = {
+                "name": shift_data['name'],
+                "minEmployees": shift_data['minEmployees'],
+                "start": shift_data['start'],
+                "end": shift_data['end']
+            }
+            services_data[shift_data['name']] = service_data
+
+        # Create the payload
+        payload = {
+            "roster_id": self.id,
+            "employees": employee_data,
+            "services": services_data
+        }
+        return payload
+
 
 class Import(models.Model):
 
@@ -125,6 +157,14 @@ class Target(models.Model):
 
 
 class ScheduleEvent(models.Model):
+
+    COLORS = [
+            '#F44336', '#E91E63', '#9C27B0', '#673AB7',
+            '#3F51B5', '#2196F3', '#03A9F4', '#00BCD4',
+            '#009688', '#4CAF50', '#8BC34A', '#CDDC39',
+            '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'
+            ]
+
     schedule = models.ForeignKey('Schedule', on_delete=models.CASCADE, related_name="events")
     employee = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name="schedule_events")
     date = models.CharField(default="", max_length=100)
@@ -142,3 +182,4 @@ class ScheduleEvent(models.Model):
             'color': self.color,
         }
         return data
+
