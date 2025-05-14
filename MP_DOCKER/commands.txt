@@ -1,9 +1,0 @@
-docker build -t masterplan .
-
-docker volume create masterplan_data
-
-docker run -d -p 80:80 -p 3306:3306 --name masterplan -v masterplan_data:/var/lib/mysql masterplan
-
-docker volume create my_pgdata
-
-docker run -d --name my-postgres-db -p 5432:5432 -e POSTGRES_PASSWORD=12345678 -v my_pgdata:/var/lib/postgresql/data postgres:17.5-alpine
