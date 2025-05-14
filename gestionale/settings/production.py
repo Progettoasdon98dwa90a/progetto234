@@ -17,12 +17,14 @@ DATABASES = {
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["progetto234-production-4b44.up.railway.app"]
+CURRENT_HOST = os.getenv('CURRENT_HOST')
+
+ALLOWED_HOSTS = [CURRENT_HOST, 'localhost', '127.0.0.1']
 CORS_ALLOW_ALL_ORIGINS = True
 
 SESSION_COOKIE_HTTPONLY = True  # ✔️ Enable for security
 SESSION_COOKIE_SAMESITE = 'Lax'  # ✔️ Add this
-SESSION_COOKIE_DOMAIN = '.progetto234-production-4b44.up.railway.app'  # ✔️ Wildcard domain
+SESSION_COOKIE_DOMAIN = F'.{CURRENT_HOST}'  # ✔️ Wildcard domain
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True  # Set back to True after HTTPS works
@@ -38,7 +40,7 @@ SECURE_HSTS_PRELOAD = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-QR_DOMAIN_NAME= 'https://progetto234-production-4b44.up.railway.app'
+QR_DOMAIN_NAME= f'https://{CURRENT_HOST}'
 MEDIA_URL = ''
 
 

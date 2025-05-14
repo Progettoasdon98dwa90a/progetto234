@@ -35,16 +35,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'corsheaders',
-    'django_tables2',
-    'crispy_forms',
-    'crispy_bootstrap4',
-    'widget_tweaks',
     "procrastinate.contrib.django",
 
 ]
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"  # or "tailwind"
-CRISPY_TEMPLATE_PACK = "bootstrap4"  # Use "tailwind" if using TailwindCSS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
