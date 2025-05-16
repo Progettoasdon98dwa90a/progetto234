@@ -90,7 +90,13 @@ def create_new_schedule(request, branch_id):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
+@csrf_exempt
+def start_schedule(request, schedule_id):
+    if request.method == 'POST':
+        if not schedule_id:
+            return JsonResponse({"error": "Missing required fields"}, status=400)
 
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 def backup_schedule(request, schedule_id):
     if request.method == 'GET':
