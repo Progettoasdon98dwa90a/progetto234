@@ -3,6 +3,7 @@ import json
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
 from django.views.decorators.csrf import csrf_exempt
+from openpyxl.styles.builtins import title
 
 from api.models import Schedule, Branch
 from api.tasks import async_create_schedule
@@ -29,17 +30,68 @@ def get_branch_schedules(request, branch_id):
 def create_new_schedule(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
-        print(data)
-        start_date = data.get('startDate')
-        end_date = data.get('endDate')
-        employees = data.get('employees')
-        free_days = data.get('freeDays')
-        particular_days = data.get('particularDays')
-        shifts_data = data.get('shiftsData')
+
+        basic_info = data.get('basicInfo')
+        title = basic_info.get('title')
+        start_date = basic_info.get('startDate').split('T')[0]
+        end_date = basic_info.get('endDate').split('T')[0]
+
+        saveShift = data.get('saveShift', False)
+
+        free_dates_keys = [key for key in basic_info.keys() if key.startswith('freeDates_')]
+        employees_ids_free_days = [key.split('_')[1] for key in free_dates_keys]
+        employees_ids = data.get('employees') #actually in the schedule
+        free_days = []
+
+        for employee_id in employees_ids:
+            free_days.append(
+                {
+                    "employee_id": employee_id,
+                    "dates": [day.split('T')[0] for day in basic_info.get('freeDates_{}'.format(employee_id))]
+                }
+            )
+        shifts_data = data.get('shifts')
+
+        particular_days = data.get('holidaysDates')
+        particular_days_data = []
+        for i in range(len(particular_days)): # for each particular_days:
+            for day in particular_days[i]['dates']:
+
+                day = day.split('T')[0]
+
+                particular_days_data.append({
+                    day : particular_days[i]['moreEmployee'], # TODO: add shift parameter
+                })
+        particular_days = particular_days_data
 
         if not all([branch_id, start_date, end_date,
-                    employees, free_days, particular_days,
-                    shifts_data]): # if even one is missing
+                    employees_ids, free_days, particular_days,
+                    shifts_data, saveShift]): # if even one is missing
+            # return missing parameter name
+            if not branch_id:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not start_date:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not end_date:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not employees_ids:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not free_days:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not particular_days:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not shifts_data:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
+            if not saveShift:
+                return JsonResponse({"error": "Missing required fields"}, status=400)
+
             return JsonResponse({"error": "Missing required fields"}, status=400)
 
         try:
@@ -48,10 +100,11 @@ def create_new_schedule(request, branch_id):
             return JsonResponse({"error": "Branch not found"}, status=404)
 
         try:
-            s = Schedule.objects.create(branch=branch,
+            s = Schedule.objects.create(title=title,
+                                        branch=branch,
                                         start_date=start_date,
                                         end_date=end_date,
-                                        employees=employees,
+                                        employees=employees_ids,
                                         shifts_data=shifts_data,
                                         free_days=free_days,
                                         particular_days=particular_days)

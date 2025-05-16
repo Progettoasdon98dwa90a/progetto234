@@ -144,7 +144,8 @@ class Command(BaseCommand):
         employees = list(Employee.objects.filter(branch=branch_obj).values_list('id', flat=True))
 
         # create some mock schedules
-        s1 = Schedule.objects.create(start_date="2025-05-01",
+        s1 = Schedule.objects.create(title="2025-05",
+                                     start_date="2025-05-01",
                                      end_date="2025-05-31",
                                      branch=branch_obj,
                                      employees=employees,
@@ -165,7 +166,8 @@ class Command(BaseCommand):
                                                       {"2025-05-19": 2}]
                                      )
 
-        s2 = Schedule.objects.create(start_date="2025-06-01",
+        s2 = Schedule.objects.create(title="2025-06",
+                                     start_date="2025-06-01",
                                      end_date="2025-06-30",
                                      branch=branch_obj,
                                      employees=employees,

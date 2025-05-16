@@ -76,6 +76,7 @@ class Employee(models.Model):
 class Schedule(models.Model):
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    title = models.CharField(default="", max_length=100)
     employees = models.JSONField(default=dict, blank=True)
     start_date = models.CharField(default="", max_length=100)
     end_date = models.CharField(default="", max_length=100)
