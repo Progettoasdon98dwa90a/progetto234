@@ -13,7 +13,7 @@ def get_branch_schedules(request, branch_id):
     Get all schedules for a specific branch.
     """
     if request.method == 'GET':
-        schedules = Schedule.objects.filter(branch_id=branch_id)
+        schedules = Schedule.objects.filter(branch_id=branch_id, processed=True)
         schedule_list = []
         for schedule in schedules:
             schedule_list.append({
@@ -22,7 +22,7 @@ def get_branch_schedules(request, branch_id):
                 "startDate": schedule.start_date,
                 "endDate": schedule.end_date,
                 "lastUpdate": "asdasdasd",
-                "state": schedule.processed, # 0 = Da verificare, 1 = Confermato, 2 = Passato
+                "state": 0, # 0 = Da verificare, 1 = Confermato, 2 = Passato
             })
         return JsonResponse(schedule_list, safe=False)
 
