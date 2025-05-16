@@ -4,3 +4,4 @@
 staticfiles/
 **/__pycache__/
 /utils_files/struttura gestionale.pdf
+/schedules_backups/

@@ -311,7 +311,7 @@ class Schedule(models.Model):
             'employees',
             'start_date',
             'end_date',
-            'shift_data',
+            'shifts_data',
             'closing_days',
             'free_days',
             'can_modify',
