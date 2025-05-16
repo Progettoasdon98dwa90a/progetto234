@@ -141,7 +141,7 @@ def get_saved_settings(request, branch_id):
 
 @csrf_exempt
 def confirm_schedule(request, schedule_id):
-    if request.method == 'POST':
+    if request.method == 'GET':
         try:
             schedule = Schedule.objects.get(id=schedule_id)
             schedule.state = 1
