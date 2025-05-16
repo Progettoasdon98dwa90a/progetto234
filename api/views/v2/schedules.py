@@ -36,19 +36,13 @@ def create_new_schedule(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
         print(data)
-
         basic_info = data.get('basicInfo')
         title = basic_info.get('title')
-        start_date_str = basic_info.get('startDate')
-        end_date_str = basic_info.get('endDate')
-        start_date = parse_date(start_date_str, '%d/%m/%Y')
-        end_date = parse_date(end_date_str, '%d/%m/%Y')
-        start_date_str_formatted = start_date.strftime('%Y-%m-%d')
-        end_date_str_formatted = end_date.strftime('%Y-%m-%d')
+        start_date = basic_info.get('startDate')
+        end_date = basic_info.get('endDate')
 
         saveShift = data.get('saveShift', False)
 
-        free_dates_keys = [key for key in basic_info.keys() if key.startswith('freeDates_')]
         employees_ids = data.get('employees') #actually in the schedule
         free_days = []
 
@@ -59,6 +53,8 @@ def create_new_schedule(request, branch_id):
                     "dates": basic_info.get('freeDates_{}'.format(employee_id))
                 }
             )
+
+        # convert all the dates from dd/mm/yyyy to yyyy-mm-dd
         shifts_data = data.get('shifts')
 
         particular_days = data.get('holidaysDates')
@@ -76,8 +72,8 @@ def create_new_schedule(request, branch_id):
         try:
             s = Schedule.objects.create(title=title,
                                         branch=branch,
-                                        start_date=start_date_str_formatted,
-                                        end_date=end_date_str_formatted,
+                                        start_date=start_date,
+                                        end_date=end_date,
                                         employees=employees_ids,
                                         shifts_data=shifts_data,
                                         free_days=free_days,
