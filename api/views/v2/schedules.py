@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import datetime
 
 from django.http import JsonResponse
@@ -124,6 +125,8 @@ def rollback_schedule(request, schedule_id):
             schedule.save(update_fields=['can_modify'])
             all_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
             data_events = [event.format_json() for event in all_events]
+            time.sleep(0.1)
+            schedule.delete_backup()
         except Schedule.DoesNotExist:
             return JsonResponse({"error": "Schedule not found"}, status=404)
         return JsonResponse({"success": True, 'events': data_events}, status=200)

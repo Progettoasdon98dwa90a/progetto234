@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from django.conf import settings
@@ -535,6 +536,18 @@ class Schedule(models.Model):
         except Exception as e:
              print(f"An unexpected error occurred during the restore process for Schedule {self.id} from {backup_path}: {e}")
              raise
+
+    def delete_backup(self):
+        backup_dir = Path(settings.SCHEDULES_BACKUP_DIR) # Convert to pathlib.Path for easy handling
+        backup_path = backup_dir / f"{self.id}.json"
+        if backup_path.exists():
+            try:
+                os.remove(backup_path)
+                print(f"Deleted backup file for Schedule {self.id}: {backup_path}")
+            except OSError as e:
+                print(f"Error deleting backup file for Schedule {self.id}: {e}")
+        else:
+            print(f"No backup file found for Schedule {self.id}. Nothing to delete.")
 
     def get_settings(self):
         employees_data=[]
