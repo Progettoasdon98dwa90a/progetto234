@@ -146,7 +146,7 @@ def confirm_schedule(request, schedule_id):
             schedule = Schedule.objects.get(id=schedule_id)
             schedule.state = 1
             schedule.save()
-            return JsonResponse({"success": True}, status=200)
+            return JsonResponse({"success": True, 'current_state': schedule.state}, status=200)
         except Schedule.DoesNotExist:
             return JsonResponse({"error": "Schedule not found"}, status=404)
 
