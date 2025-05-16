@@ -144,7 +144,7 @@ def confirm_schedule(request, schedule_id):
     if request.method == 'GET':
         try:
             schedule = Schedule.objects.get(id=schedule_id)
-            schedule.state = 0
+            schedule.state = 1
             schedule.save()
             return JsonResponse({"success": True, 'current_state': schedule.state}, status=200)
         except Schedule.DoesNotExist:
