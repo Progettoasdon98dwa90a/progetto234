@@ -5,6 +5,9 @@ masterplan_app = settings.MASTERPLAN_APP
 masterplan_port = settings.MASTERPLAN_PORT
 
 def insert_absence(session, free_day_data):
+    if not free_day_data['dates']:
+        print(f"No free days for employee {free_day_data['employee_id']}")
+        return
     for date in free_day_data['dates']:
         payload_data = {
             'action' : 'absence',
