@@ -64,36 +64,6 @@ def create_new_schedule(request, branch_id):
                 })
         particular_days = particular_days_data
 
-        if not all([branch_id, start_date, end_date,
-                    employees_ids, free_days, particular_days,
-                    shifts_data, saveShift]): # if even one is missing
-            # return missing parameter name
-            if not branch_id:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not start_date:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not end_date:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not employees_ids:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not free_days:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not particular_days:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not shifts_data:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            if not saveShift:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            return JsonResponse({"error": "Missing required fields"}, status=400)
-
         try:
             branch = Branch.objects.get(id=branch_id)
         except Branch.DoesNotExist:
