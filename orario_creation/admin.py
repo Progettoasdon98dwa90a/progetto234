@@ -1,5 +1,8 @@
+import requests
+from django.conf import settings
 
-
+masterplan_app = settings.MASTERPLAN_APP
+masterplan_port = settings.MASTERPLAN_PORT
 
 def insert_admin(cursor, conn):
     admin_data = {
@@ -66,4 +69,15 @@ def insert_admin(cursor, conn):
     # Commit the changes
     conn.commit()
 
-    return cursor.lastrowid
+    login_data = {
+        "username": "masterplan",
+        "password": "PASSWORD"
+    }
+    session = requests.Session()
+
+    login_request_url = f"http://{masterplan_app}:{masterplan_port}/masterplan/frontend/login.php"
+
+    session.post(login_request_url, data=login_data)
+
+
+    return session

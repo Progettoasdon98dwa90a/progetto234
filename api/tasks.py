@@ -9,7 +9,7 @@ from api.models import Schedule
 logger = logging.getLogger('procrastinate')
 
 @app.task()
-def create_schedule(schedule_id):
+def async_create_schedule(schedule_id):
     try:
         from orario_creation.main import fill_data_and_create_schedule
         logging.info("Creating schedule...")
@@ -25,7 +25,6 @@ def create_schedule(schedule_id):
             return
 
         result = fill_data_and_create_schedule(schedule_obj=schedule_obj)
-        logging.info("Schedule created...")
         logging.info("Converting schedule data to events...")
         convert_schedule_data_to_events(result, schedule_obj)
 
@@ -57,7 +56,7 @@ def convert_schedule_data_to_events(schedule_data, schedule_obj):
     """
     from api.models import ScheduleEvent, Employee # Import models inside if needed
 
-    shifts_data = schedule_obj.shift_data
+    shifts_data = schedule_obj.shifts_data
     events_to_create = [] # Collect events to create in bulk
 
     if not isinstance(shifts_data, list):

@@ -1,11 +1,16 @@
+from orario_creation.absence import insert_absence
 from orario_creation.admin import insert_admin
 from orario_creation import initialize_database
 from orario_creation.employees import insert_employee
-from orario_creation.services import insert_service
+from orario_creation.services import insert_shift
 from orario_creation.roles import insert_role
-from orario_creation.roster import create_roster, get_roster_data
+from orario_creation.roster import create_roster, get_roster_data, start_planning
+from django.conf import settings
+import requests
 
 import logging
+masterplan_app = settings.MASTERPLAN_APP
+masterplan_port = settings.MASTERPLAN_PORT
 
 logger = logging.getLogger('procrastinate')
 
@@ -21,7 +26,7 @@ def fill_data_and_create_schedule(schedule_obj):
 
     logging.info('creating admin...')
 
-    insert_admin(cursor,conn)
+    session = insert_admin(cursor,conn)
 
     logging.info('admin created...')
 
@@ -31,6 +36,8 @@ def fill_data_and_create_schedule(schedule_obj):
 
     logging.info('roster created...')
 
+
+    logging.info('creating employees...')
     for employee_id, employee_data in schedule_data['employees'].items():
 
         role_mp_id = insert_role(
@@ -51,14 +58,31 @@ def fill_data_and_create_schedule(schedule_obj):
             employee_data,
             []
         )
+
+
     logging.info('employees created...')
 
     logging.info('inserting services...')
-    for service_name, service_data in schedule_data['services'].items():
-        logging.info(service_data)
-        insert_service(cursor, conn, roster_id, service_name, service_data['minEmployees'], service_data['start'], service_data['end'])
+    for shift_name, shift_data in schedule_data['shifts_data'].items():
+        logging.info(shift_data)
+        insert_shift(cursor, conn, roster_id, shift_name, shift_data['minEmployees'], shift_data['start'], shift_data['end'])
 
     logging.info('services inserted...')
-    result = get_roster_data(cursor, conn, roster_id, schedule_obj)
+    ### END INSERTING DATA IN DB
+
+    logging.info('starting planning...')
+    start_planning(session, roster_id, schedule_obj)
+    logging.info('planning finished...')
+
+    logging.info('setting absences for employees...')
+    for employee_free_days_data in schedule_data['free_days']:
+        insert_absence(session, employee_free_days_data)
+        print(f"Absence inserted for {employee_free_days_data['employee_id']} on {employee_free_days_data['dates']}")
+
+    logging.info("Getting roster data...")
+    result = get_roster_data(cursor, conn,session, roster_id, schedule_obj)
     logging.info("Schedule created...")
     return result
+
+
+

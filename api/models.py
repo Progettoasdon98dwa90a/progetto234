@@ -51,15 +51,32 @@ class Employee(models.Model):
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    def get_total_medium_receipts_number(self):
+        from api.formulas.receipts import get_scontrini_dipendente_date_range
+
+        data = get_scontrini_dipendente_date_range(self.id, None, None)
+        return data
+
+    def get_total_medium_sales(self):
+        from api.formulas.sales import get_total_sales_dipendente
+
+        data = get_total_sales_dipendente(self.id)
+        return data
+
+
+
+
+
 class Schedule(models.Model):
 
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     employees = models.JSONField(default=dict, blank=True)
     start_date = models.CharField(default="", max_length=100)
     end_date = models.CharField(default="", max_length=100)
-    shift_data = models.JSONField(default=dict, blank=True)
+    shifts_data = models.JSONField(default=dict, blank=True)
     closing_days = models.JSONField(default=dict, blank=True)
     free_days = models.JSONField(default=dict, blank=True)
+    particular_days = models.JSONField(default=dict, blank=True)
 
     can_modify = models.BooleanField(default=False)
 
@@ -114,12 +131,12 @@ class Schedule(models.Model):
             employee_data[employee.id] = {
                 "id": employee.id,
                 "max_hours_per_day": employee.max_hours_per_day,
-                "max_services_per_week": 99,
+                "max_services_per_week": 99, # constraint solver will respect the hours parameters
                 "max_hours_per_week": employee.max_hours_per_week,
                 "max_hours_per_month": employee.max_hours_per_month
             }
 
-        for shift_data in self.shift_data:
+        for shift_data in self.shifts_data:
             service_data = {
                 "name": shift_data['name'],
                 "minEmployees": shift_data['minEmployees'],
@@ -128,11 +145,16 @@ class Schedule(models.Model):
             }
             services_data[shift_data['name']] = service_data
 
+
+
         # Create the payload
         payload = {
             "roster_id": self.id,
             "employees": employee_data,
-            "services": services_data
+            "shifts_data": services_data,
+            "free_days": self.free_days,
+            "particular_days": self.particular_days
+
         }
         return payload
 
@@ -378,6 +400,42 @@ class Schedule(models.Model):
         except Exception as e:
              print(f"An unexpected error occurred during the restore process for Schedule {self.id} from {backup_path}: {e}")
              raise
+
+    def get_settings(self):
+        employees_data=[]
+        employees_scontrino_medio = []
+        for employee_id in self.employees:
+            try:
+                employee_obj = Employee.objects.get(id=employee_id)
+                emp_medium_receipt_number = employee_obj.get_total_medium_receipts_number()
+                emp_medium_receipt_value = employee_obj.get_total_medium_sales()
+            except Employee.DoesNotExist:
+                employees_scontrino_medio.append(None)
+            employees_data.append({
+                "id": employee_id,
+                'fullName': employee_obj.get_full_name(),
+                'mediumReceipts': emp_medium_receipt_number,
+                'mediumReceiptSale': emp_medium_receipt_value,
+                'role': employee_obj.role,
+                'class': employee_obj.skill_class,
+            })
+
+        shifts_data = []
+        for shift in self.shifts_data:
+            shifts_data.append({
+                "id": shift["id"],
+                "name": shift["name"],
+                "start": shift["start"],
+                "end": shift["end"],
+                "minEmployees": shift["minEmployees"],
+            })
+
+
+        obj = {
+            "employees": employees_data,
+            "savedShift": shifts_data,
+        }
+        return obj
 
 
 class Import(models.Model):

@@ -145,30 +145,46 @@ class Command(BaseCommand):
 
         # create some mock schedules
         s1 = Schedule.objects.create(start_date="2025-05-01",
-                                    end_date="2025-05-31",
-                                    branch=branch_obj,
-                                    employees=employees,
-                                    shift_data=[{"name": "M", "start": "9:00", "end": "13:00", "minEmployees": "1"},
-                                                {"name": "P", "start": "13:00", "end": "17:00", "minEmployees": "2"},
-                                                {"name": "C", "start": "17:00", "end": "20:00", "minEmployees": "1"}],
-                                    free_days=[{"employee_id": 1, "free_days": ["2025-05-01", "2025-05-08", "2025-05-15", "2025-05-22"]},
-                                               {"employee_id": 2, "free_days": ["2025-05-05", "2025-05-12", "2025-05-19", "2025-05-26"]},
-                                               {"employee_id": 3, "free_days": ["2025-05-06", "2025-05-13", "2025-05-20", "2025-05-27"]}]
+                                     end_date="2025-05-31",
+                                     branch=branch_obj,
+                                     employees=employees,
+                                     shifts_data=[{"id":0, "name": "M", "start": "9:00", "end": "13:00", "minEmployees": "1"},
+                                                  {"id":1, "name": "P", "start": "13:00", "end": "17:00", "minEmployees": "2"},
+                                                  {"id":2, "name": "C", "start": "17:00", "end": "20:00", "minEmployees": "1"}],
+                                     free_days=[{"employee_id": 1,
+                                                 "dates": ["2025-05-01", "2025-05-08", "2025-05-15", "2025-05-22"]},
+                                                {"employee_id": 2,
+                                                 "dates": ["2025-05-05", "2025-05-12", "2025-05-19", "2025-05-26"]},
+                                                {"employee_id": 3,
+                                                 "dates": ["2025-05-06", "2025-05-13", "2025-05-20", "2025-05-27"]}],
+                                     particular_days=[{"2025-05-01": 2},
+                                                      {"2025-05-05": 2},
+                                                      {"2025-05-06": 2},
+                                                      {"2025-05-12": 2},
+                                                      {"2025-05-13": 2},
+                                                      {"2025-05-19": 2}]
                                      )
 
         s2 = Schedule.objects.create(start_date="2025-06-01",
                                      end_date="2025-06-30",
                                      branch=branch_obj,
                                      employees=employees,
-                                     shift_data=[{"name": "M", "start": "9:00", "end": "13:00", "minEmployees": "1"},
-                                                 {"name": "P", "start": "13:00", "end": "17:00", "minEmployees": "2"},
-                                                 {"name": "C", "start": "17:00", "end": "20:00", "minEmployees": "1"}],
+                                     shifts_data=[{"id":0,"name": "M", "start": "9:00", "end": "13:00", "minEmployees": "1"},
+                                                 {"id":1, "name": "P", "start": "13:00", "end": "17:00", "minEmployees": "2"},
+                                                 {"id":2, "name": "C", "start": "17:00", "end": "20:00", "minEmployees": "1"}],
                                      free_days=[{"employee_id": 1,
-                                                 "free_days": ["2025-06-01", "2025-06-08", "2025-06-15", "2025-06-22"]},
+                                                 "dates": ["2025-06-01", "2025-06-08", "2025-06-15", "2025-06-22"]},
                                                 {"employee_id": 2,
-                                                 "free_days": ["2025-06-05", "2025-06-12", "2025-06-19", "2025-06-26"]},
+                                                 "dates": ["2025-06-05", "2025-06-12", "2025-06-19", "2025-06-26"]},
                                                 {"employee_id": 3,
-                                                 "free_days": ["2025-06-06", "2025-06-13", "2025-06-20", "2025-06-27"]}]
+                                                 "dates": ["2025-06-06", "2025-06-13", "2025-06-20", "2025-06-27"]}],
+                                     particular_days=[{"2025-06-01": 2},
+                                                      {"2025-06-05": 2},
+                                                      {"2025-06-06": 2},
+                                                      {"2025-06-12": 2},
+                                                      {"2025-06-13": 2},
+                                                      {"2025-06-19": 2}],
+
                                      )
         s1.save()
         s2.save()

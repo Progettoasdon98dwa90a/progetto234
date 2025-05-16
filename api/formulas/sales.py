@@ -5,6 +5,7 @@ and quantity ('Qta. Vend.') data.
 """
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from turtledemo.penrose import start
 
 from api.models import Employee, Import, Branch # Assuming models are accessible
 
@@ -99,6 +100,92 @@ def generate_report_performance_sales(branch_id, start_date, end_date):
     display_data_sorted = dict(sorted(display_data.items()))
 
     return display_data_sorted
+
+def get_sales_dipendente_single_date(employee_id, date):
+    # ... (copy function code from original file) ...
+    employee = None
+    branch = None
+    import_obj = None
+
+    try:
+        employee = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        print(f"SALES: No employee found with ID {employee_id}")
+        return 0
+
+    if employee:
+        branch = employee.branch
+    else:
+        return 0
+
+    try:
+        import_obj = Import.objects.get(import_date=date, branch=branch, import_type="sales_data")
+    except Import.DoesNotExist:
+        # print(f"SALES: No sales_data import found for branch {branch.id} on {date}")
+        return 0
+    except Import.MultipleObjectsReturned:
+         print(f"SALES Warning: Multiple 'sales_data' imports found for employee {employee_id}'s branch on {date}. Using first one.")
+         import_obj = Import.objects.filter(import_date=date, branch=branch, import_type="sales_data").first()
+         if not import_obj: return 0
+
+    data = import_obj.data
+    if not isinstance(data, list):
+         print(f"SALES Warning: Import data for {date} branch {branch.id} is not a list.")
+         return 0
+
+    for employee_data in data:
+        emp_id_str = employee_data.get('Dipendente')
+        if emp_id_str is not None and int(emp_id_str) == employee_id:
+            importo_str = employee_data.get('Importo') # Sales amount string
+            if importo_str is not None:
+                # Clean and convert sales amount string (e.g., "1.234,56" -> 1234.56)
+                value_str_cleaned = str(importo_str).replace(".", "").replace(",", ".")
+                value = float(value_str_cleaned) # Use float for this report as per original
+                return value
+
+    return 0
+
+def get_total_sales_dipendente(employee_id):
+    # ... (copy function code from original file) ...
+    employee = None
+    branch = None
+    import_obj = None
+
+    try:
+        employee = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        print(f"SALES: No employee found with ID {employee_id}")
+        return 0
+
+    if employee:
+        branch = employee.branch
+    else:
+        return 0
+
+    import_objs_qs = Import.objects.filter(branch=branch, import_type="sales_data")
+    if not import_objs_qs.exists():
+        print(f"SALES: No sales_data imports found for employee {employee_id}'s branch between {start_date} and {end_date}")
+        return 0
+
+    grand_total = 0 # Initialize as integer
+
+    for import_obj in import_objs_qs:
+        data = import_obj.data
+        if not isinstance(data, list):
+             print(f"SALES Warning: Import data for {import_obj.import_date} branch {branch.id} is not a list.")
+             continue
+
+        for employee_data in data:
+            emp_id_str = employee_data.get('Dipendente')
+            if emp_id_str is not None and int(emp_id_str) == employee_id:
+                importo_str = employee_data.get('Importo') # Sales amount string
+                if importo_str is not None:
+                    # Clean and convert sales amount string (e.g., "1.234,56" -> 1234.56)
+                    value_str_cleaned = str(importo_str).replace(".", "").replace(",", ".")
+                    value = float(value_str_cleaned) # Use float for this report as per original
+                    grand_total += value
+
+    return grand_total
 
 
 # get_branch_single_day_sales: Calculates the total sales for a specific branch on a single date, handling brand-specific logic.
