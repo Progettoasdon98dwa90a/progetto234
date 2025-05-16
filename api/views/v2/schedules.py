@@ -27,7 +27,7 @@ def get_branch_schedules(request, branch_id):
                 "startDate": schedule.start_date,
                 "endDate": schedule.end_date,
                 "lastUpdate": "asdasdasd",
-                "state": 0, # 0 = Da verificare, 1 = Confermato, 2 = Passato
+                "state": schedule.state, # 0 = Da verificare, 1 = Confermato, 2 = Passato
             })
         return JsonResponse(schedule_list, safe=False)
 
