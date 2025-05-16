@@ -59,8 +59,13 @@ class Employee(models.Model):
 
     def get_total_medium_sales(self):
         from api.formulas.sales import get_total_sales_dipendente
+        total_worked_days = self.get_total_working_days()
+        data = round(get_total_sales_dipendente(self.id) / total_worked_days, 2)
+        return data
 
-        data = get_total_sales_dipendente(self.id)
+    def get_total_working_days(self):
+        from api.formulas.work_calculation import get_total_working_days_dipendente
+        data = get_total_working_days_dipendente(self.id)
         return data
 
 
@@ -414,8 +419,8 @@ class Schedule(models.Model):
             employees_data.append({
                 "id": employee_id,
                 'fullName': employee_obj.get_full_name(),
-                'mediumReceipts': emp_medium_receipt_number,
-                'mediumReceiptSale': emp_medium_receipt_value,
+                'mediumReceiptsNumber': emp_medium_receipt_number, # num scontrini
+                'mediumReceiptSale': emp_medium_receipt_value, # valore medio scontrini
                 'role': employee_obj.role,
                 'class': employee_obj.skill_class,
             })
