@@ -40,7 +40,6 @@ def create_new_schedule(request, branch_id):
         saveShift = data.get('saveShift', False)
 
         free_dates_keys = [key for key in basic_info.keys() if key.startswith('freeDates_')]
-        employees_ids_free_days = [key.split('_')[1] for key in free_dates_keys]
         employees_ids = data.get('employees') #actually in the schedule
         free_days = []
 

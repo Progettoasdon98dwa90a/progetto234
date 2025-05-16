@@ -411,7 +411,7 @@ class Schedule(models.Model):
     def get_settings(self):
         employees_data=[]
         employees_scontrino_medio = []
-        for employee_id in self.employees:
+        for employee_id in Employee.objects.filter(branch=self.branch):
             try:
                 employee_obj = Employee.objects.get(id=employee_id)
                 emp_medium_receipt_number = employee_obj.get_total_medium_receipts_number()
