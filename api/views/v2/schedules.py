@@ -96,6 +96,13 @@ def start_schedule(request, schedule_id):
         if not schedule_id:
             return JsonResponse({"error": "Missing required fields"}, status=400)
 
+        try:
+            schedule = Schedule.objects.get(id=schedule_id)
+            async_create_schedule.defer(schedule_id=schedule.id)
+            return JsonResponse({"success": True, "message": "Schedule creation started."}, status=200)
+        except Schedule.DoesNotExist:
+            return JsonResponse({"error": "Schedule not found"}, status=404)
+
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 def backup_schedule(request, schedule_id):
