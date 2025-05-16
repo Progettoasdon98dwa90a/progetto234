@@ -146,7 +146,6 @@ def rollback_schedule(request, schedule_id):
                 all_events = ScheduleEvent.objects.filter(schedule=schedule) # Filter by the schedule instance
                 data_events = [event.format_json() for event in all_events]
 
-                time.sleep(0.1) # Consider if this is truly necessary
                 schedule.delete_backup() # Assuming this method does not involve ScheduleEvents
 
             except Exception as e:
