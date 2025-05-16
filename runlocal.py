@@ -74,9 +74,8 @@ def main():
             worker_command,
             cwd=settings.BASE_DIR,  # Run the command from the project root
             env=os.environ.copy(),  # Pass the current environment variables
-            # Optional: Redirect stdout/stderr for cleaner output or logging
-            # stdout=subprocess.PIPE,
-            # stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         print(f"Procrastinate worker started with PID: {worker_process.pid}")
 
