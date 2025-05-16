@@ -74,12 +74,25 @@ def get_scontrini_dipendente_date_range(employee_id, start_date, end_date):
         branch = employee.branch
     else:
         return 0.0
+    if not start_date and not end_date:
+        import_objs_qs = Import.objects.filter(branch=branch, import_type="sales_data")
+    else:
+        # Validate dates and create range
+        try:
+            start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+            if start_date_obj > end_date_obj:
+                print("SCONTRINI Error: Start date cannot be after end date.")
+                return {}
+        except ValueError:
+            print("SCONTRINI Error: Date format error. Please use YYYY-MM-DD.")
+            return {}
 
-    try:
-        import_objs_qs = Import.objects.filter(import_date__range=(start_date, end_date), branch=branch, import_type="sales_data")
-    except Exception as e: # Catch potential database errors
-        print(f"SCONTRINI Error fetching imports for employee {employee_id} range {start_date}-{end_date}: {e}")
-        return 0.0
+        try:
+            import_objs_qs = Import.objects.filter(import_date__range=(start_date, end_date), branch=branch, import_type="sales_data")
+        except Exception as e: # Catch potential database errors
+            print(f"SCONTRINI Error fetching imports for employee {employee_id} range {start_date}-{end_date}: {e}")
+            return 0.0
 
     grand_total = 0.0 # Initialize as float
 
