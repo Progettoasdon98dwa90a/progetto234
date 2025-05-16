@@ -14,7 +14,7 @@ from api.views.v2.imports import uploadImportData
 from api.views.v2.dashboard import dashboard_data
 from api.views.v2.report_employees import get_employees_report
 from api.views.v2.schedules import get_branch_schedules, start_schedule, backup_schedule, restore_schedule, \
-    async_create_schedule, create_new_schedule, get_saved_settings
+    async_create_schedule, create_new_schedule, get_saved_settings, confirm_schedule
 from api.views.v2.schedules_events import create_schedule_event, get_schedule_events, delete_schedule_event
 from api.views.v2.target import target_grid
 
@@ -63,6 +63,7 @@ urlpatterns = [
 
     path('turni/backupSchedule/<int:schedule_id>/', backup_schedule, name='BACKUP_SCHEDULE'),
     path('turni/restoreSchedule/<int:schedule_id>/', restore_schedule, name='RESTORE_SCHEDULE'),
+    path('turni/confirmSchedule/<int:schedule_id>/', confirm_schedule, name='CONFIRM_SCHEDULE'),
     path('turni/getEvents/<int:schedule_id>/', get_schedule_events, name='GET_SCHEDULE_EVENTS'),
     path('turni/startSchedule/<int:schedule_id>/', start_schedule, name='START_SCHEDULE'),
     path('turni/createEvent/<int:schedule_id>/', create_schedule_event, name='CREATE_SCHEDULE_EVENT'),

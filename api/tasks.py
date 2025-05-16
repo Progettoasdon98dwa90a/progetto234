@@ -166,7 +166,7 @@ def convert_schedule_data_to_events(schedule_data, schedule_obj):
                             date=day_str,
                             start_time=start_time_str,
                             end_time=end_time_str,
-                            color=random.choice(ScheduleEvent.COLORS)
+                            color=random.choice(ScheduleEvent.COLORS) # TODO: un colore per ogni tipo di shift
                         )
                         events_to_create.append(event)
 

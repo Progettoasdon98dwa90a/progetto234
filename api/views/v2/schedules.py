@@ -35,7 +35,6 @@ def get_branch_schedules(request, branch_id):
 def create_new_schedule(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
-        print(data)
         basic_info = data.get('basicInfo')
         title = basic_info.get('title')
         start_date = basic_info.get('startDate')
@@ -136,3 +135,16 @@ def get_saved_settings(request, branch_id):
             return JsonResponse({"error": "Schedule not found"}, status=404)
 
         return JsonResponse({"success": True, "settings": schedule.get_settings()}, status=200)
+
+@csrf_exempt
+def confirm_schedule(request, schedule_id):
+    if request.method == 'POST':
+        try:
+            schedule = Schedule.objects.get(id=schedule_id)
+            schedule.state = 1
+            schedule.save()
+            return JsonResponse({"success": True}, status=200)
+        except Schedule.DoesNotExist:
+            return JsonResponse({"error": "Schedule not found"}, status=404)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)

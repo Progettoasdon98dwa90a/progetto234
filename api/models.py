@@ -85,6 +85,7 @@ class Schedule(models.Model):
     closing_days = models.JSONField(default=dict, blank=True)
     free_days = models.JSONField(default=dict, blank=True)
     particular_days = models.JSONField(default=dict, blank=True)
+    state = models.IntegerField(default=0)
 
     can_modify = models.BooleanField(default=False)
 
@@ -374,6 +375,11 @@ class Schedule(models.Model):
 
         return backup_path
 
+    def backup_exists(self):
+        backup_dir = Path(settings.SCHEDULES_BACKUP_DIR) # Convert to pathlib.Path for easy handling
+        backup_path = backup_dir / f"{self.id}.json"
+        return backup_path.exists()
+
     def restore_from_json(self):
         """
         Restores the fields of the current Schedule instance and its related events
@@ -615,4 +621,6 @@ class ScheduleEvent(models.Model):
             'color': self.color,
         }
         return data
+
+
 
