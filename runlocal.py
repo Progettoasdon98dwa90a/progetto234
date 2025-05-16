@@ -61,24 +61,6 @@ def main():
         call_command('collectstatic', interactive=False)
         print("Static files collected successfully.")
 
-        # --- Start the Procrastinate worker process ---
-        print("Starting Procrastinate worker...")
-        worker_command = [
-            sys.executable,  # Use the same python interpreter
-            settings.BASE_DIR / 'manage.py',
-            'procrastinate',
-            'worker',
-        ]
-        # Use subprocess.Popen to start the worker non-blocking
-        worker_process = subprocess.Popen(
-            worker_command,
-            cwd=settings.BASE_DIR,  # Run the command from the project root
-            env=os.environ.copy(),  # Pass the current environment variables
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        print(f"Procrastinate worker started with PID: {worker_process.pid}")
-
         print("Initial setup complete. Handing off to runserver...")
     else:
         print("Running in reloader child process - skipping setup.")
@@ -87,24 +69,7 @@ def main():
     print("Starting Django development server...")
     call_command('runserver', '0.0.0.0:8000')
 
-    if worker_process and worker_process.poll() is None:  # Check if the process is still running
-        print(f"Terminating Procrastinate worker (PID: {worker_process.pid})...")
-        try:
-            # Send SIGTERM for graceful shutdown
-            worker_process.terminate()
-            # Wait for the worker to exit, with a timeout
-            worker_process.wait(timeout=10)  # Wait up to 10 seconds
-            print("Procrastinate worker terminated gracefully.")
-        except subprocess.TimeoutExpired:
-            # If worker doesn't exit after timeout, force kill
-            print("Procrastinate worker did not terminate gracefully, killing...", file=sys.stderr)
-            worker_process.kill()  # Send SIGKILL
-            worker_process.wait()  # Wait for kill to complete
-            print("Procrastinate worker killed.")
-        except Exception as e:
-            print(f"An error occurred while terminating worker: {e}", file=sys.stderr)
-    elif worker_process:
-        print(f"Procrastinate worker (PID: {worker_process.pid}) was already stopped.")
+
 
     print("Server command finished.") # This line is reached when the server is stopped
 
