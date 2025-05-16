@@ -142,7 +142,7 @@ LOGGING = {
     },
     "handlers": {
         "procrastinate": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "procrastinate",
         },
@@ -150,7 +150,7 @@ LOGGING = {
     "loggers": {
         "procrastinate": {
             "handlers": ["procrastinate"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
         },
     },
