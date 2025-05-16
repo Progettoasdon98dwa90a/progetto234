@@ -411,15 +411,15 @@ class Schedule(models.Model):
     def get_settings(self):
         employees_data=[]
         employees_scontrino_medio = []
-        for employee_id in Employee.objects.filter(branch=self.branch):
+        all_employees = Employee.objects.filter(branch=self.branch)
+        for employee_obj in all_employees :
             try:
-                employee_obj = Employee.objects.get(id=employee_id)
                 emp_medium_receipt_number = employee_obj.get_total_medium_receipts_number()
                 emp_medium_receipt_value = employee_obj.get_total_medium_sales()
             except Employee.DoesNotExist:
                 employees_scontrino_medio.append(None)
             employees_data.append({
-                "id": employee_id,
+                "id": employee_obj.id,
                 'fullName': employee_obj.get_full_name(),
                 'mediumReceiptsNumber': emp_medium_receipt_number, # num scontrini
                 'mediumReceiptSale': emp_medium_receipt_value, # valore medio scontrini
