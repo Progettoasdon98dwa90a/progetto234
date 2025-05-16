@@ -25,17 +25,12 @@ def fill_data_and_create_schedule(schedule_obj):
     logging.info("Database initialized...")
 
     logging.info('creating admin...')
-
     session = insert_admin(cursor,conn)
-
     logging.info('admin created...')
 
     logging.info('creating roster...')
-
     roster_id = create_roster(cursor, conn)
-
     logging.info('roster created...')
-
 
     logging.info('creating employees...')
     for employee_id, employee_data in schedule_data['employees'].items():
@@ -59,13 +54,18 @@ def fill_data_and_create_schedule(schedule_obj):
             []
         )
 
-
     logging.info('employees created...')
+
+    particular_days = schedule_data['particular_days']
+    [{"2025-08-01": 2}, {"2025-08-05": 2}, {"2025-08-06": 2}, {"2025-08-12": 2}, {"2025-08-13": 2}, {"2025-08-19": 2}]
 
     logging.info('inserting services...')
     for shift_name, shift_data in schedule_data['shifts_data'].items():
         logging.info(shift_data)
-        insert_shift(cursor, conn, roster_id, shift_name, shift_data['minEmployees'], shift_data['start'], shift_data['end'])
+        is_particular_day = 1
+        insert_shift(cursor, conn, roster_id,
+                     shift_name, shift_data['minEmployees'], shift_data['start'], shift_data['end'],
+                     )
 
     logging.info('services inserted...')
     ### END INSERTING DATA IN DB

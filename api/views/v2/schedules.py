@@ -53,13 +53,10 @@ def create_new_schedule(request, branch_id):
         shifts_data = data.get('shifts')
 
         particular_days = data.get('holidaysDates')
-        particular_days_data = []
+        particular_days_data = {}
         for i in range(len(particular_days)): # for each particular_days:
             for day in particular_days[i]['dates']:
-
-                particular_days_data.append({
-                    day : particular_days[i]['moreEmployee'], # TODO: add shift parameter
-                })
+                particular_days_data[day] = [particular_days[i]['moreEmployee'], particular_days[i]['shift']]
         particular_days = particular_days_data
 
         try:
