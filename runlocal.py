@@ -109,5 +109,6 @@ def main():
 
     print("Server command finished.") # This line is reached when the server is stopped
 
+
 if __name__ == "__main__":
     main()
