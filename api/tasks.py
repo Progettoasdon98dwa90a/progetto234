@@ -59,6 +59,14 @@ def convert_schedule_data_to_events(schedule_data, schedule_obj):
     shifts_data = schedule_obj.shifts_data
     events_to_create = [] # Collect events to create in bulk
 
+    # map a shift type by name to a unique color for this shift type
+    available_colors = random.choice(ScheduleEvent.COLORS)
+
+    shift_colors = {}
+    for shift in schedule_obj.shifts_data:
+        shift_colors[shift['name']] = random.choice(available_colors)
+        available_colors.remove(shift_colors[shift['name']])
+
     if not isinstance(shifts_data, list):
         logging.error("schedule_obj.shift_data is not a list.")
         return # Or raise an error
@@ -166,7 +174,7 @@ def convert_schedule_data_to_events(schedule_data, schedule_obj):
                             date=day_str,
                             start_time=start_time_str,
                             end_time=end_time_str,
-                            color=random.choice(ScheduleEvent.COLORS) # TODO: un colore per ogni tipo di shift
+                            color=shift_colors.get(service_name)
                         )
                         events_to_create.append(event)
 
