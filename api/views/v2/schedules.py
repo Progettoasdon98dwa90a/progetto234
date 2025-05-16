@@ -29,12 +29,14 @@ def get_branch_schedules(request, branch_id):
 def create_new_schedule(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
+        print(data)
         start_date = data.get('startDate')
         end_date = data.get('endDate')
         employees = data.get('employees')
         free_days = data.get('freeDays')
         particular_days = data.get('particularDays')
         shifts_data = data.get('shiftsData')
+
         if not all([branch_id, start_date, end_date,
                     employees, free_days, particular_days,
                     shifts_data]): # if even one is missing
