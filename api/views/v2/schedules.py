@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
@@ -7,6 +8,10 @@ from openpyxl.styles.builtins import title
 
 from api.models import Schedule, Branch
 from api.tasks import async_create_schedule
+
+def parse_date(date_str, format_from, format_to='%Y-%m-%d'):
+    """Parse and convert date between formats"""
+    return datetime.strptime(date_str, format_from).strftime(format_to)
 
 def get_branch_schedules(request, branch_id):
     """
@@ -34,8 +39,12 @@ def create_new_schedule(request, branch_id):
 
         basic_info = data.get('basicInfo')
         title = basic_info.get('title')
-        start_date = basic_info.get('startDate')
-        end_date = basic_info.get('endDate')
+        start_date_str = basic_info.get('startDate')
+        end_date_str = basic_info.get('endDate')
+        start_date = parse_date(start_date_str, '%d/%m/%Y')
+        end_date = parse_date(end_date_str, '%d/%m/%Y')
+        start_date_str_formatted = start_date.strftime('%Y-%m-%d')
+        end_date_str_formatted = end_date.strftime('%Y-%m-%d')
 
         saveShift = data.get('saveShift', False)
 
@@ -67,8 +76,8 @@ def create_new_schedule(request, branch_id):
         try:
             s = Schedule.objects.create(title=title,
                                         branch=branch,
-                                        start_date=start_date,
-                                        end_date=end_date,
+                                        start_date=start_date_str_formatted,
+                                        end_date=end_date_str_formatted,
                                         employees=employees_ids,
                                         shifts_data=shifts_data,
                                         free_days=free_days,

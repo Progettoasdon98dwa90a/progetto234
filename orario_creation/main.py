@@ -56,9 +56,7 @@ def fill_data_and_create_schedule(schedule_obj):
 
     logging.info('employees created...')
 
-    particular_days = schedule_data['particular_days']
     # [{"2025-08-01": [2, "P"]}, {"2025-08-02": [1, "M"]}, {"2025-08-03": [1, "C"]}] example particular days
-
 
     logging.info('inserting services...')
     for shift_name, shift_data in schedule_data['shifts_data'].items():
