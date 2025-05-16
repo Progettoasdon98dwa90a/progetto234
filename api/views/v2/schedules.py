@@ -47,7 +47,7 @@ def create_new_schedule(request, branch_id):
             free_days.append(
                 {
                     "employee_id": employee_id,
-                    "dates": [day.split('T')[0] for day in basic_info.get('freeDates_{}'.format(employee_id))]
+                    "dates": basic_info.get('freeDates_{}'.format(employee_id))
                 }
             )
         shifts_data = data.get('shifts')
