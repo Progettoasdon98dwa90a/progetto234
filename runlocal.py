@@ -39,6 +39,7 @@ def main():
     os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:12345678@localhost:5432/postgres')
 
     SEED_DATA = False
+    worker_process = None
 
     django.setup()
 
@@ -86,6 +87,26 @@ def main():
 
     print("Starting Django development server...")
     call_command('runserver', '0.0.0.0:8000')
+
+    if worker_process and worker_process.poll() is None:  # Check if the process is still running
+        print(f"Terminating Procrastinate worker (PID: {worker_process.pid})...")
+        try:
+            # Send SIGTERM for graceful shutdown
+            worker_process.terminate()
+            # Wait for the worker to exit, with a timeout
+            worker_process.wait(timeout=10)  # Wait up to 10 seconds
+            print("Procrastinate worker terminated gracefully.")
+        except subprocess.TimeoutExpired:
+            # If worker doesn't exit after timeout, force kill
+            print("Procrastinate worker did not terminate gracefully, killing...", file=sys.stderr)
+            worker_process.kill()  # Send SIGKILL
+            worker_process.wait()  # Wait for kill to complete
+            print("Procrastinate worker killed.")
+        except Exception as e:
+            print(f"An error occurred while terminating worker: {e}", file=sys.stderr)
+    elif worker_process:
+        print(f"Procrastinate worker (PID: {worker_process.pid}) was already stopped.")
+
     print("Server command finished.") # This line is reached when the server is stopped
 
 if __name__ == "__main__":
