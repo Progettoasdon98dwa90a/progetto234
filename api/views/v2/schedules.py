@@ -35,6 +35,7 @@ def get_branch_schedules(request, branch_id):
 def create_new_schedule(request, branch_id):
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
+        print(data)
         basic_info = data.get('basicInfo')
         title = basic_info.get('title')
         start_date = basic_info.get('startDate')
