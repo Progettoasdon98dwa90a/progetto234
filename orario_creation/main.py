@@ -63,10 +63,12 @@ def fill_data_and_create_schedule(schedule_obj):
     logging.info('inserting services...')
     for shift_name, shift_data in schedule_data['shifts_data'].items():
         logging.info(shift_data)
-        is_particular_day = 1
         insert_shift(cursor, conn, roster_id,
                      shift_name, shift_data['minEmployees'], shift_data['start'], shift_data['end'],
                      )
+
+    logging.info(schedule_data['periods'])
+
 
     logging.info('services inserted...')
     ### END INSERTING DATA IN DB

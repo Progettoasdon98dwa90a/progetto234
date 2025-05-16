@@ -1,12 +1,15 @@
 def insert_shift(cursor, conn, roster_id, name,
                  min_employees, start, end,
-                 is_particular_day=False, extra_employees=None):
+                 is_particular_day=False, extra_employees=None, particular_day_date=None):
 
     # Query to insert a record into Service (or Shift) with exception for particular days with extra employees
-    num_employees = min_employees
     if is_particular_day:
-        num_employees += extra_employees
-
+        num_employees = int(min_employees) + extra_employees
+        num_employees = str(num_employees)
+        date_start, date_end = particular_day_date, particular_day_date
+    else:
+        num_employees = min_employees
+        date_start, date_end = "2000-01-01", "2100-01-01"
 
     query = """
     INSERT INTO Service (roster_id, shortname, title, location, employees, start, end, date_start, date_end, color, wd1, wd2, wd3, wd4, wd5, wd6, wd7)
@@ -20,8 +23,8 @@ def insert_shift(cursor, conn, roster_id, name,
         num_employees,
         start,
         end,
-        "2000-01-01",
-        "2100-01-01",
+        date_start,
+        date_end,
         "FFFFFF",
         1,
         1,
