@@ -6,7 +6,7 @@ from django.utils.crypto import get_random_string
 from django.views.decorators.csrf import csrf_exempt
 from openpyxl.styles.builtins import title
 
-from api.models import Schedule, Branch
+from api.models import Schedule, Branch, ScheduleEvent
 from api.tasks import async_create_schedule
 
 def parse_date(date_str, format_from, format_to='%Y-%m-%d'):
@@ -116,15 +116,17 @@ def backup_schedule(request, schedule_id):
         return JsonResponse({"success": True}, status=200)
 
 
-def restore_schedule(request, schedule_id):
+def rollback_schedule(request, schedule_id):
     if request.method == 'GET':
         try:
             schedule = Schedule.objects.get(id=schedule_id)
             schedule.restore_from_json()
             schedule.save(update_fields=['can_modify'])
+            all_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
+            data_events = [event.format_json() for event in all_events]
         except Schedule.DoesNotExist:
             return JsonResponse({"error": "Schedule not found"}, status=404)
-        return JsonResponse({"success": True}, status=200)
+        return JsonResponse({"success": True, 'events': data_events}, status=200)
 
 
 def get_saved_settings(request, branch_id):

@@ -15,9 +15,12 @@ def run_schedule_check(schedule):
         schedule: The Schedule instance affected by the event change.
     """
     print(f"DEBUG: Running check for Schedule #{schedule.id}...")
-    backup_exists = schedule.backup_exists()
-    if not backup_exists:
-        schedule.backup_to_json()
+    if schedule.state == 1: # If the schedule is confirmed, check
+        backup_exists = schedule.backup_exists()
+        if not backup_exists:
+            schedule.backup_to_json()
+        else:
+            pass
     else:
         pass
 
