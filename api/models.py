@@ -53,8 +53,9 @@ class Employee(models.Model):
 
     def get_total_medium_receipts_number(self):
         from api.formulas.receipts import get_scontrini_dipendente_date_range
+        total_worked_days = self.get_total_working_days()
 
-        data = get_scontrini_dipendente_date_range(self.id, None, None)
+        data = int(get_scontrini_dipendente_date_range(self.id, None, None) / total_worked_days)
         return data
 
     def get_total_medium_sales(self):
