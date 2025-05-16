@@ -91,7 +91,7 @@ def create_new_schedule(request, branch_id):
 
 @csrf_exempt
 def start_schedule(request, schedule_id):
-    if request.method == 'POST':
+    if request.method == 'GET':
         if not schedule_id:
             return JsonResponse({"error": "Missing required fields"}, status=400)
 
