@@ -26,7 +26,7 @@ def get_employees_report(request, branch_id):
             return JsonResponse({"status": "error", "errors": ["Branch not found"]}, status=400)
 
         if branch.get_brand() == "original":
-            return JsonResponse({"status": "error", "errors": ["Original Marines No Employee Performances"]}, status=400)
+            return JsonResponse({"status": "error", "errors": ["Original Marines No Employees Performances"]}, status=400)
 
         # Convert the date parameter to string (it may be None)
         date = str(date_param) if date_param else ""

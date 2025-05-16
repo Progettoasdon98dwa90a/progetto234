@@ -1,9 +1,11 @@
 import os
+import subprocess
 import sys
 from pathlib import Path
 import django
 import dj_database_url
 import psycopg2
+from django.conf import settings
 from django.core.management import call_command
 
 def reset_schema():
@@ -36,7 +38,7 @@ def main():
     os.environ.setdefault('POSTGRES', 'True')
     os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:12345678@localhost:5432/postgres')
 
-    SEED_DATA = True
+    SEED_DATA = False
 
     django.setup()
 
@@ -53,8 +55,29 @@ def main():
             call_command('seed') # Load seed data
             print("Seed data loaded successfully.")
 
+
+
         call_command('collectstatic', interactive=False)
         print("Static files collected successfully.")
+
+        # --- Start the Procrastinate worker process ---
+        print("Starting Procrastinate worker...")
+        worker_command = [
+            sys.executable,  # Use the same python interpreter
+            settings.BASE_DIR / 'manage.py',
+            'procrastinate',
+            'worker',
+        ]
+        # Use subprocess.Popen to start the worker non-blocking
+        worker_process = subprocess.Popen(
+            worker_command,
+            cwd=settings.BASE_DIR,  # Run the command from the project root
+            env=os.environ.copy(),  # Pass the current environment variables
+            # Optional: Redirect stdout/stderr for cleaner output or logging
+            # stdout=subprocess.PIPE,
+            # stderr=subprocess.PIPE,
+        )
+        print(f"Procrastinate worker started with PID: {worker_process.pid}")
 
         print("Initial setup complete. Handing off to runserver...")
     else:

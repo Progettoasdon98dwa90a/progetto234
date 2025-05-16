@@ -34,8 +34,8 @@ def create_new_schedule(request, branch_id):
 
         basic_info = data.get('basicInfo')
         title = basic_info.get('title')
-        start_date = basic_info.get('startDate').split('T')[0]
-        end_date = basic_info.get('endDate').split('T')[0]
+        start_date = basic_info.get('startDate')
+        end_date = basic_info.get('endDate')
 
         saveShift = data.get('saveShift', False)
 
@@ -56,8 +56,6 @@ def create_new_schedule(request, branch_id):
         particular_days_data = []
         for i in range(len(particular_days)): # for each particular_days:
             for day in particular_days[i]['dates']:
-
-                day = day.split('T')[0]
 
                 particular_days_data.append({
                     day : particular_days[i]['moreEmployee'], # TODO: add shift parameter
