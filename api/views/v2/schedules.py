@@ -83,27 +83,13 @@ def create_new_schedule(request, branch_id):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
-        return JsonResponse({"success": True, "message": "Schedule created successfully."}, status=200)
+        async_create_schedule.defer(schedule_id=s.id)
+
+        return JsonResponse({"success": True, "message": "Schedule creation started."}, status=200)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-@csrf_exempt
-def start_schedule(request, schedule_id):
-    if request.method == 'POST':
-        if not schedule_id:
-            return JsonResponse({"error": "Missing required fields"}, status=400)
-        try:
-            schedule = Schedule.objects.get(id=schedule_id)
-        except Schedule.DoesNotExist:
-            return JsonResponse({"error": "Schedule not found"}, status=404)
 
-        if schedule.processed:
-            return JsonResponse({"error": "Schedule already processed"}, status=400)
-
-        async_create_schedule.defer(schedule_id=schedule_id)
-        return JsonResponse({"success": True}, status=200)
-
-    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 def backup_schedule(request, schedule_id):
