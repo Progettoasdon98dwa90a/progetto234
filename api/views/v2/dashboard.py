@@ -47,7 +47,7 @@ def dashboard_data(request, branch_id):
             'peopleCount' : people_count, # Current Month
             'monthlyTarget' : {
                 'monthlyBudget' : current_target.sales_target, # Current Month
-                'actualIncome' : int(total_sales),
+                'actualIncome' : float(total_sales),
                 'reachedIncomePercentage' : reached_income_percentage,
                 'variation_percentage' : 0,
 
