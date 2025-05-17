@@ -176,7 +176,7 @@ def rollback_schedule(request, schedule_id):
 
 @csrf_exempt
 def delete_schedules(request, branch_id):
-    if request.method == 'DELETE':
+    if request.method == 'POST':
         deleted_ids = []
         errors = []
 
