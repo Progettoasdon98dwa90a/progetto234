@@ -125,4 +125,8 @@ def check_schedule(schedule_id):
     else:
         schedule.backup_to_json()
         print(f'Backup created for schedule #{schedule_id}')
+
+    if schedule.state == 1:
+        schedule.state = 0
+        schedule.save()
     return 0
