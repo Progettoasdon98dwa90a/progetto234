@@ -248,7 +248,6 @@ class Schedule(models.Model):
         # Add the list of related events to the main backup dictionary
         backup_data['related_events_data'] = related_events_data
 
-
         # --- Write to file ---
         backup_filename = f"{self.id}.json"
         backup_path = backup_dir / backup_filename

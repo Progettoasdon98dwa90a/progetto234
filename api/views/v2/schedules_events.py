@@ -24,6 +24,8 @@ def create_schedule_event(request, schedule_id):
         print(e)
         return JsonResponse({"status" : "error", 'message': 'Invalid employee ID'}, status=400)
 
+    check_schedule(schedule_id)
+
     if data.get('id'):
         try:
             event_to_update_id = int(data.get('id'))
@@ -76,6 +78,7 @@ def create_schedule_event(request, schedule_id):
 
 def get_schedule_events(request, schedule_id):
     if request.method == 'GET':
+
         try:
             schedule_events = ScheduleEvent.objects.filter(schedule_id=schedule_id)
             events_data = [event.format_json() for event in schedule_events]
@@ -92,6 +95,7 @@ def get_schedule_events(request, schedule_id):
 @csrf_exempt
 def delete_schedule_event(request, schedule_id, event_id):
     if request.method == 'DELETE':
+        check_schedule(schedule_id)
         try:
             event_to_delete = ScheduleEvent.objects.get(id=event_id)
             event_to_delete.delete()
@@ -108,4 +112,17 @@ def delete_schedule_event(request, schedule_id, event_id):
             return JsonResponse({"status" : "error", 'message': 'Error deleting schedule event'}, status=500)
     else:
         return JsonResponse({"status" : "error", 'message': 'Invalid request method'}, status=405)
-    
+
+
+def check_schedule(schedule_id):
+    try:
+        schedule = Schedule.objects.get(id=schedule_id)
+    except Schedule.DoesNotExist:
+        return 1
+
+    if schedule.backup_exists():
+        return 0
+    else:
+        schedule.backup_to_json()
+        print(f'Backup created for schedule #{schedule_id}')
+    return 0

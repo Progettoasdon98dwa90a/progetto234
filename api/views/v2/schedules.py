@@ -171,3 +171,5 @@ def rollback_schedule(request, schedule_id):
 
         # If everything was successful
         return JsonResponse({"success": True, 'events': data_events}, status=200)
+
+
