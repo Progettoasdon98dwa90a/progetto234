@@ -9,7 +9,6 @@ from django.views.decorators.csrf import csrf_exempt
 from openpyxl.styles.builtins import title
 
 from api.models import Schedule, Branch, ScheduleEvent
-from api.signals import schedule_event_saved, schedule_event_deleted
 from api.tasks import async_create_schedule
 
 def parse_date(date_str, format_from, format_to='%Y-%m-%d'):
@@ -21,12 +20,12 @@ def get_branch_schedules(request, branch_id):
     Get all schedules for a specific branch.
     """
     if request.method == 'GET':
-        schedules = Schedule.objects.filter(branch_id=branch_id, processed=True)
+        schedules = Schedule.objects.filter(branch_id=branch_id)
         schedule_list = []
         for schedule in schedules:
             schedule_list.append({
                 "id": schedule.id,
-                "name": get_random_string(10),
+                "name": schedule.title,
                 "startDate": schedule.start_date,
                 "endDate": schedule.end_date,
                 "lastUpdate": "asdasdasd",
@@ -57,14 +56,17 @@ def create_new_schedule(request, branch_id):
                 }
             )
 
-        # convert all the dates from dd/mm/yyyy to yyyy-mm-dd
         shifts_data = data.get('shifts')
+
 
         particular_days = data.get('holidaysDates')
         particular_days_data = {}
-        for i in range(len(particular_days)): # for each particular_days:
+        for i in range(len(particular_days)): # for each object of dates, shift (id), moreEmployees, in particular_days:
             for day in particular_days[i]['dates']:
-                particular_days_data[day] = [particular_days[i]['moreEmployee'], particular_days[i]['shift']]
+                matching_shift_name = shifts_data[particular_days[i]['shift']]['name']
+                particular_days_data[day] = [particular_days[i]['moreEmployee'], matching_shift_name]
+
+
         particular_days = particular_days_data
 
         try:
@@ -112,65 +114,12 @@ def backup_schedule(request, schedule_id):
         try:
             schedule = Schedule.objects.get(id=schedule_id)
             schedule.backup_to_json()
-            schedule.can_modify = True
-            schedule.save(update_fields=['can_modify'])
         except Schedule.DoesNotExist:
             return JsonResponse({"error": "Schedule not found"}, status=404)
         return JsonResponse({"success": True}, status=200)
 
 
-def rollback_schedule(request, schedule_id):
-    if request.method == 'GET':
-        schedule = None # Define schedule outside try to access in finally if needed
-        try:
-            schedule = Schedule.objects.get(id=schedule_id)
 
-            # --- Temporarily disable ScheduleEvent signals ---
-            # Disconnect the receivers for post_save and post_delete signals
-            # for the ScheduleEvent sender.
-            # Ensure the receiver function names match what you have in signals.py
-            post_save.disconnect(receiver=schedule_event_saved, sender=ScheduleEvent)
-            post_delete.disconnect(receiver=schedule_event_deleted, sender=ScheduleEvent)
-            # -------------------------------------------------
-
-            try:
-                # Call the method that potentially creates/deletes ScheduleEvents
-                # Signals for ScheduleEvent will be skipped here
-                schedule.restore_from_json()
-
-                # Saving the main schedule object (this *will* trigger Schedule's post_save,
-                # but you only wanted to skip ScheduleEvent's signals, which is fine)
-                schedule.save(update_fields=['can_modify'])
-
-                # Fetch the events *after* the restore is complete
-                all_events = ScheduleEvent.objects.filter(schedule=schedule) # Filter by the schedule instance
-                data_events = [event.format_json() for event in all_events]
-
-                schedule.delete_backup() # Assuming this method does not involve ScheduleEvents
-
-            except Exception as e:
-                 # Catch any error that occurs *after* disconnecting signals
-                 print(f"An error occurred during rollback: {e}") # Log the error
-                 # Re-raise the exception after ensuring signals are reconnected
-                 raise # The 'finally' block will execute before the raise
-
-            finally:
-                # --- Re-enable ScheduleEvent signals ---
-                # Reconnect the receivers in the finally block to ensure they are
-                # reconnected even if an error occurred.
-                post_save.connect(receiver=schedule_event_saved, sender=ScheduleEvent)
-                post_delete.connect(receiver=schedule_event_deleted, sender=ScheduleEvent)
-                # ---------------------------------------
-
-        except Schedule.DoesNotExist:
-            return JsonResponse({"error": "Schedule not found"}, status=404)
-        except Exception as e:
-            # Catch the re-raised exception or other exceptions
-            return JsonResponse({"error": str(e)}, status=500)
-
-
-        # If everything was successful
-        return JsonResponse({"success": True, 'events': data_events}, status=200)
 
 
 def get_saved_settings(request, branch_id):
@@ -189,9 +138,36 @@ def confirm_schedule(request, schedule_id):
         try:
             schedule = Schedule.objects.get(id=schedule_id)
             schedule.state = 1
+            schedule.backup_to_json()
             schedule.save()
             return JsonResponse({"success": True, 'current_state': schedule.state}, status=200)
         except Schedule.DoesNotExist:
             return JsonResponse({"error": "Schedule not found"}, status=404)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+def rollback_schedule(request, schedule_id):
+
+    if request.method == 'GET':
+        schedule = None # Define schedule outside try to access in finally if needed
+        try:
+            schedule = Schedule.objects.get(id=schedule_id)
+            try:
+                schedule.restore_from_json()
+                all_events = ScheduleEvent.objects.filter(schedule=schedule) # Filter by the schedule instance
+                data_events = [event.format_json() for event in all_events]
+                schedule.delete_backup() # Assuming this method does not involve ScheduleEvents
+            except Exception as e:
+                 # Catch any error that occurs *after* disconnecting signals
+                 print(f"An error occurred during rollback: {e}") # Log the error
+                 # Re-raise the exception after ensuring signals are reconnected
+                 raise # The 'finally' block will execute before the raise
+
+        except Schedule.DoesNotExist:
+            return JsonResponse({"error": "Schedule not found"}, status=404)
+        except Exception as e:
+            # Catch the re-raised exception or other exceptions
+            return JsonResponse({"error": str(e)}, status=500)
+
+        # If everything was successful
+        return JsonResponse({"success": True, 'events': data_events}, status=200)

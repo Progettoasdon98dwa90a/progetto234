@@ -60,12 +60,12 @@ def convert_schedule_data_to_events(schedule_data, schedule_obj):
     events_to_create = [] # Collect events to create in bulk
 
     # map a shift type by name to a unique color for this shift type
-    available_colors = random.choice(ScheduleEvent.COLORS)
-
-    shift_colors = {
-        shift['name']: random
-        for shift in shifts_data
-    }
+    available_colors = ScheduleEvent.COLORS
+    shifts_colors = {}
+    for shift in shifts_data:
+        shifts_colors[shift['name']] = random.choice(available_colors)
+        available_colors.remove(shifts_colors[shift['name']])
+    logging.info(f"Available colors: {available_colors}")
 
     if not isinstance(shifts_data, list):
         logging.error("schedule_obj.shift_data is not a list.")
@@ -174,7 +174,7 @@ def convert_schedule_data_to_events(schedule_data, schedule_obj):
                             date=day_str,
                             start_time=start_time_str,
                             end_time=end_time_str,
-                            color=random.choice(ScheduleEvent.COLORS) # TODO: un colore per ogni tipo di shift
+                            color=shifts_colors.get(service_name, "#FF19IA"),
                         )
                         events_to_create.append(event)
 

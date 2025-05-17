@@ -88,8 +88,6 @@ class Schedule(models.Model):
     particular_days = models.JSONField(default=dict, blank=True)
     state = models.IntegerField(default=0)
 
-    can_modify = models.BooleanField(default=False)
-
     processed = models.BooleanField(default=False)
 
     def __str__(self):
@@ -142,112 +140,6 @@ class Schedule(models.Model):
                     shifts_map[shift['name']] = shift
         return shifts_map
 
-    def generate_schedule_periods(self):
-        """
-        Generates a list of schedule periods based on the overall dates
-        and particular days.
-
-        Returns:
-            list: A list of dictionaries, each representing a period:
-                  [
-                      {
-                          "start_date": "YYYY-MM-DD",
-                          "end_date": "YYYY-MM-DD",
-                          "shifts": [...] # List of shift dictionaries valid for this period
-                      },
-                      ...
-                  ]
-        """
-        periods = []
-
-        try:
-            # Convert start and end dates to date objects
-            start_d = datetime.strptime(self.start_date, "%Y-%m-%d").date()
-            end_d = datetime.strptime(self.end_date, "%Y-%m-%d").date()
-        except ValueError:
-            # This should ideally be caught by clean(), but good to handle defensively
-            print(f"Warning: Invalid date format in schedule {self.id}. Cannot generate periods.")
-            return periods  # Return empty list if dates are invalid
-
-        # Parse and sort particular days' dates
-        particular_days_data = {}
-        particular_dates_list = []
-        for date_str, data in self.particular_days.items():
-            try:
-                p_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                # Check if the particular day is within the overall schedule range
-                if start_d <= p_date <= end_d:
-                    particular_days_data[p_date] = data  # Store data using date object as key
-                    particular_dates_list.append(p_date)
-                else:
-                    print(
-                        f"Warning: Particular day {date_str} is outside schedule range for schedule {self.id} and will be ignored.")
-            except ValueError:
-                # This should also be caught by clean(), print warning and skip
-                print(
-                    f"Warning: Invalid date format '{date_str}' in particular_days for schedule {self.id}. Ignoring.")
-                continue  # Skip this particular day
-
-        particular_dates_list.sort()
-
-        # Create a map of standard shifts for quick lookup
-        shifts_map = self._get_shifts_map()
-        standard_shifts = list(shifts_map.values())  # List of all standard shifts
-
-        current_start_date = start_d
-
-        # Iterate through sorted particular days to define periods
-        for p_date in particular_dates_list:
-            # 1. Add a normal period *before* the particular day (if any)
-            end_of_normal_period = p_date - timedelta(days=1)
-
-            if current_start_date <= end_of_normal_period:
-                periods.append({
-                    "start_date": current_start_date.strftime("%Y-%m-%d"),
-                    "end_date": end_of_normal_period.strftime("%Y-%m-%d"),
-                    "shifts": standard_shifts  # Apply all standard shifts
-                })
-
-            # 2. Add the particular day period
-            p_shift_info = particular_days_data[p_date]  # Get the [count, shift_name]
-            if len(p_shift_info) == 2 and isinstance(p_shift_info[1], str):
-                p_shift_name = p_shift_info[1]
-                particular_shift_details = shifts_map.get(p_shift_name)  # Get details by name
-
-                if particular_shift_details:
-                    # Create a temporary shift dictionary for the particular day, potentially adjusting minEmployees
-                    # The structure requires a list of shift dicts
-                    period_shifts = [{
-                        "name": particular_shift_details.get('name'),
-                        "start": particular_shift_details.get('start'),
-                        "end": particular_shift_details.get('end'),
-                        "minEmployees": p_shift_info[0]  # Use the count from particular_days
-                    }]
-                    periods.append({
-                        "start_date": p_date.strftime("%Y-%m-%d"),
-                        "end_date": p_date.strftime("%Y-%m-%d"),  # Particular day is a 1-day period
-                        "shifts": period_shifts  # Apply only the specified particular shift
-                    })
-                else:
-                    print(
-                        f"Warning: Shift name '{p_shift_name}' in particular_days for date {p_date.strftime('%Y-%m-%d')} not found in shifts_data for schedule {self.id}. Skipping this particular day period.")
-
-            else:
-                print(
-                    f"Warning: Invalid data format for particular day {p_date.strftime('%Y-%m-%m')} in particular_days for schedule {self.id}. Expected [count, 'ShiftName']. Skipping this day.")
-
-            # 3. Update current_start_date to the day *after* the particular day
-            current_start_date = p_date + timedelta(days=1)
-
-        # 4. Add the final normal period *after* the last particular day (if any)
-        if current_start_date <= end_d:
-            periods.append({
-                "start_date": current_start_date.strftime("%Y-%m-%d"),
-                "end_date": end_d.strftime("%Y-%m-%d"),
-                "shifts": standard_shifts  # Apply all standard shifts
-            })
-
-        return periods
 
     def create_payload(self):
         employee_data = {}
@@ -280,7 +172,6 @@ class Schedule(models.Model):
             "roster_id": self.id,
             "employees": employee_data,
             "shifts_data": services_data,
-            "periods": self.generate_schedule_periods(),
             "free_days": self.free_days,
             "particular_days": self.particular_days
 
@@ -315,7 +206,6 @@ class Schedule(models.Model):
             'shifts_data',
             'closing_days',
             'free_days',
-            'can_modify',
             'processed', # Exclude schedule_events JSONField if ScheduleEvent model is canonical
         ]
 
@@ -428,6 +318,7 @@ class Schedule(models.Model):
 
                 # Ignore the original 'id' field
                 backup_data.pop('id', None)
+                backup_data['state'] = 0
                 # Ignore the 'related_events_data' key as we handle it separately
                 related_events_data = backup_data.pop('related_events_data', None)
                 # Ignore the original schedule_events JSONField if ScheduleEvent model is canonical

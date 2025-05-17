@@ -38,7 +38,7 @@ def main():
     os.environ.setdefault('POSTGRES', 'True')
     os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:12345678@localhost:5432/postgres')
 
-    SEED_DATA = True
+    SEED_DATA = False
 
     django.setup()
 
@@ -49,6 +49,8 @@ def main():
 
         if SEED_DATA:
             reset_schema()
+            call_command('makemigrations')  # Apply migrations
+
             print("Schema dropped and created successfully.")
             call_command('migrate')  # Apply migrations
             print("Migrations applied successfully.")
