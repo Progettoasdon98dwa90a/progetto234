@@ -172,4 +172,81 @@ def rollback_schedule(request, schedule_id):
         # If everything was successful
         return JsonResponse({"success": True, 'events': data_events}, status=200)
 
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+@csrf_exempt
+def delete_schedules(request):
+    if request.method == 'DELETE':
+        deleted_ids = []
+        errors = []
+
+        try:
+            schedules_ids_to_delete = json.loads(request.body.decode('utf-8'))
+            if not isinstance(schedules_ids_to_delete, list):
+                return JsonResponse({
+                    "error": "Request body must be a JSON array of schedule IDs."
+                }, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format in request body."}, status=400)
+        except Exception as e: # Catch other potential errors during body parsing
+            return JsonResponse({"error": f"Error processing request body: {str(e)}"}, status=400)
+
+        if not schedules_ids_to_delete:
+            return JsonResponse({
+                "message": "No schedule IDs provided for deletion.",
+                "deleted_ids": [],
+                "errors": []
+            }, status=200) # Or 400 if you consider empty list an error
+
+        for schedule_id in schedules_ids_to_delete:
+            try:
+                # It's good to validate the type of schedule_id if possible
+                if not isinstance(schedule_id, int): # Assuming IDs are integers
+                    errors.append({
+                        "id": schedule_id,
+                        "error": "Invalid ID format. ID must be an integer."
+                    })
+                    continue # Skip to the next ID
+
+                schedule = Schedule.objects.get(id=schedule_id)
+                schedule.delete() # This might also raise an exception
+                deleted_ids.append(schedule_id)
+            except Schedule.DoesNotExist:
+                errors.append({
+                    "id": schedule_id,
+                    "error": "Schedule not found"
+                })
+            except Exception as e: # Catch any other unexpected errors during get() or delete()
+                errors.append({
+                    "id": schedule_id,
+                    "error": f"An unexpected error occurred: {str(e)}"
+                })
+
+        response_data = {
+            "deleted_ids": deleted_ids,
+            "errors": errors
+        }
+
+        # Determine appropriate status code
+        # 200 OK: If all operations were successful OR if some were successful and some failed (client can check body)
+        # 207 Multi-Status: More semantically correct if there's a mix, but 200 is often simpler for clients.
+        # 404 Not Found: Only if ALL requested IDs were not found and NO other errors occurred.
+        # 400 Bad Request: If the input itself was malformed (e.g., non-integer IDs if that's a strict rule).
+
+        status_code = 200 # Default to 200 OK
+        if not deleted_ids and errors:
+            if all(err.get("error") == "Schedule not found" for err in errors):
+                # If everything failed and all were "not found", 404 might be suitable.
+                # However, for a batch operation, returning 200 with details is often preferred
+                # to avoid masking that the *request itself* was processed.
+                # Let's stick with 200 and let the client parse the body.
+                pass
+            # elif any other type of error occurred, 200 is still fine with details in body.
+            # Or you could use 500 if there were server-side errors for some items.
+            # For simplicity, we'll generally stick to 200 if the request format was valid and processed.
+
+        return JsonResponse(response_data, status=status_code)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
 

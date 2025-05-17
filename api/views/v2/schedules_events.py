@@ -130,3 +130,5 @@ def check_schedule(schedule_id):
         schedule.state = 0
         schedule.save()
     return 0
+
+# TODO: TIMESTAMP LAST MODIFIED X SCHEDULE QUANDO SI MODIFICA UN EVENTO
