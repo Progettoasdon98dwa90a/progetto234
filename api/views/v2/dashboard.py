@@ -33,7 +33,7 @@ def dashboard_data(request, branch_id):
         # Calculate the percentage, ensuring the monthly budget is not zero to prevent division error
         if current_target.sales_target is not None and current_target.sales_target > 0:
             # Perform the division and multiply by 100
-            reached_income_percentage = (total_sales / current_target.sales_target) * 100
+            reached_income_percentage = (float(total_sales) / current_target.sales_target) * 100
             # Optional: Round the percentage to a reasonable number of decimal places
             reached_income_percentage = round(reached_income_percentage, 2)  # Round to 2 decimal places
             # Note: This will correctly show percentages > 100 if actual_income exceeds the target
