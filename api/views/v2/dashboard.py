@@ -1,10 +1,30 @@
+from datetime import timedelta, datetime
+
 from django.http import JsonResponse
 
 from api.models import Employee
+from api.formulas.receipts import get_total_scontrini_date_range
+from api.formulas.sales import get_total_sales_date_range
+from api.formulas.counter import get_number_ingressi_date_range
 
+
+def get_last_7_days_start_date():
+    today = datetime.now()
+    last_7_days_start_date = today - timedelta(days=7)
+    return last_7_days_start_date.strftime('%Y-%m-%d')
 
 def dashboard_data(request, branch_id):
     if request.method == 'GET':
+        last_7_days_start_date = get_last_7_days_start_date()
+        total_receipts = get_total_scontrini_date_range(branch_id,
+                                                        last_7_days_start_date,
+                                                        datetime.now().date().strftime('%Y-%m-%d'))
+        last_month_start_date = (datetime.now().replace(day=1)).strftime('%Y-%m-%d')
+        current_date = datetime.now().date().strftime('%Y-%m-%d')
+
+        total_sales = get_total_sales_date_range(branch_id, last_month_start_date, current_date)
+
+        people_count = get_number_ingressi_date_range(branch_id, last_month_start_date, current_date)
 
         data = {
             'metrics' :{},
@@ -13,9 +33,9 @@ def dashboard_data(request, branch_id):
         }
 
         metrics_data = {
-            'totalReceipts' : 0, # Last 7 Days
-            'incomes' : 0, # Current Month
-            'peopleCount' : 0, # Current Month
+            'totalReceipts' : total_receipts, # Last 7 Days
+            'incomes' : total_sales, # Current Month
+            'peopleCount' : people_count, # Current Month
             'monthlyTarget' : {
                 'monthlyBudget' : 0,
                 'actualIncome' : 0,

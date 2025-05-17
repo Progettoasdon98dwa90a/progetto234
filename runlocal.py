@@ -38,7 +38,7 @@ def main():
     os.environ.setdefault('POSTGRES', 'True')
     os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:12345678@localhost:5432/postgres')
 
-    SEED_DATA = False
+    SEED_DATA = True
 
     django.setup()
 

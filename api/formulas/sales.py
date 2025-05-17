@@ -339,6 +339,80 @@ def generate_branch_report_sales(branch_id, start_date, end_date):
     # report_data = dict(sorted(report_data.items())) # Sort if needed
     return report_data
 
+def get_total_sales_single_date(branch_id, date):
+    # ... (copy function code from original file) ...
+    branch = None
+    import_obj = None
+
+    try:
+        branch = Branch.objects.get(id=branch_id)
+    except Branch.DoesNotExist:
+        print(f"SALES: No branch found with ID {branch_id}")
+        return 0
+
+    try:
+        import_obj = Import.objects.get(import_date=date, branch=branch, import_type="sales_data")
+    except Import.DoesNotExist:
+        # print(f"SALES: No sales_data import found for branch {branch.id} on {date}")
+        return 0
+    except Import.MultipleObjectsReturned:
+         print(f"SALES Warning: Multiple 'sales_data' imports found for branch {branch.id} on {date}. Using first one.")
+         import_obj = Import.objects.filter(import_date=date, branch=branch, import_type="sales_data").first()
+
+    data = import_obj.data
+    if not isinstance(data, list):
+         print(f"SALES Warning: Import data for {date} branch {branch.id} is not a list.")
+         return 0
+
+    total_sales = Decimal("0.00")
+    for employee_data in data:
+        importo_value = employee_data.get('Importo')
+        if importo_value is not None:
+            try:
+                value_str = str(importo_value).replace(".", "").replace(",", ".")
+                total_sales += Decimal(value_str)
+            except (InvalidOperation, TypeError): pass # Ignore bad data point
+
+    # Quantize final results
+    total_sales = total_sales.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    return total_sales
+
+def get_total_sales_date_range(branch_id, start_date, end_date):
+    # ... (copy function code from original file) ...
+    branch = None
+
+    try:
+        branch = Branch.objects.get(id=branch_id)
+    except Branch.DoesNotExist:
+        print(f"SALES: No branch found with ID {branch_id}")
+        return 0
+
+    # Validate dates and create range
+    try:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+        if start_date_obj > end_date_obj:
+            print("SALES Error: Start date cannot be after end date.")
+            return 0
+    except ValueError:
+        print("SALES Error: Date format error. Please use YYYY-MM-DD.")
+        return 0
+
+    num_days = (end_date_obj - start_date_obj).days + 1
+    date_range = [(start_date_obj + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
+
+    total_sales = Decimal("0.00")
+
+    for date_str in date_range:
+        total_sales += get_total_sales_single_date(branch_id, date_str)
+
+    # Quantize final results
+    total_sales = total_sales.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    return total_sales
+
+
 
 # get_number_sales_performance_single_date: Retrieves the quantity of items sold ('Qta. Vend.') by a specific employee on a single date.
 # Output: int (quantity sold) or 0 if employee/import/data not found or invalid.

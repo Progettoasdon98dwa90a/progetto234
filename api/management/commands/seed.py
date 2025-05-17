@@ -136,6 +136,63 @@ class Command(BaseCommand):
 
             Import.objects.bulk_create(import_bulk_create_list)
             print(f"Import data created successfully for  {file_name}.")
+
+        files = ['counter_biella_2023.xlsx', 'counter_biella_2024.xlsx', 'counter_biella_2025.xlsx']
+        for file_name in files:
+            import_data_file = current_directory / 'utils_files' / file_name
+
+            # Load the workbook from the local file
+            workbook = load_workbook(filename=import_data_file)
+
+            # Access the sheet
+            sheet = workbook.active  # You can specify sheet name if needed
+
+            # Initialize the dictionary to hold the data
+            data_dict = {}
+            import_qs = Import.objects.none()
+
+            errors = []
+            selected_branch = 1
+            selected_type = 'counter_data'
+
+            # Iterate through the rows, skipping the header
+            for row in sheet.iter_rows(min_row=2, values_only=True):  # Skip the header row
+                date = row[0]  # assuming the date is in the second column
+                record = {
+                    "(Ing) Ingressi": row[1] or 0,
+                    "(Est) Traffico Esterno": row[2] or 0,
+                    "(TA) Tasso di Attrazione": row[3] or 0,
+                }
+
+                # mar-19.11.24 to YYYY/MM/DD
+                date = date.split("-")[1]
+                date = datetime.strptime(date, "%d.%m.%y").strftime("%Y-%m-%d")
+
+                # If the date is already a key, overwrite the current record
+                if date in data_dict:
+
+                    data_dict[date] = record
+                else:
+                    # Otherwise, create a new list with the record
+                    data_dict[date] = [record]
+
+                data_dict[date] = [record]
+
+            for date, records in data_dict.items():
+                if Import.objects.filter(branch=branch_obj, import_date=date,
+                                         import_type=selected_type).exists():
+                    errors.append(f"Collision on {date}")
+                    continue
+
+            import_bulk_create_list = []
+            for date, data in data_dict.items():
+                i = Import(import_date=date, data=data, branch=branch_obj, import_type=selected_type)
+                import_bulk_create_list.append(i)
+
+            Import.objects.bulk_create(import_bulk_create_list)
+
+            print(f"Import data created successfully for  {file_name}.")
+
         
         selected_branch = 1
         branch_obj = Branch.objects.get(id=selected_branch)

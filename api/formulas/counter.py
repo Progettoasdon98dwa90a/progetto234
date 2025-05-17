@@ -54,6 +54,50 @@ def get_number_ingressi_single_date(branch_id, date):
         print(f"COUNTER Ingressi Warning: Unexpected counter data structure for branch {branch_id} on {date}")
         return 0
 
+def get_number_ingressi_date_range(branch_id, start_date, end_date):
+    # ... (copy function code from original file) ...
+    branch = None
+    import_objs_qs = None
+
+    try:
+        branch = Branch.objects.get(id=branch_id)
+    except Branch.DoesNotExist:
+        print(f"COUNTER Ingressi Range: No branch found with ID {branch_id}")
+        return 0
+
+    try:
+        import_objs_qs = Import.objects.filter(import_date__range=(start_date, end_date), branch=branch, import_type="counter_data")
+    except Exception as e:
+        print(f"COUNTER Ingressi Range Error fetching imports for branch {branch_id}: {e}")
+        return 0
+
+    grand_total = 0
+
+    if import_objs_qs.exists():
+        for import_obj in import_objs_qs:
+            data = import_obj.data
+            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                ingressi_str = data[0].get('(Ing) Ingressi')
+                if ingressi_str is not None:
+                    try:
+                        # Handle potential non-integer values if necessary, clean first
+                        ingressi_cleaned = str(ingressi_str).split('.')[0] # Take integer part if float
+                        grand_total += int(ingressi_cleaned)
+                    except (ValueError, TypeError):
+                        print(f"COUNTER Ingressi Range Warning: Invalid '(Ing) Ingressi' value '{ingressi_str}' for branch {branch_id} on {import_obj.import_date}")
+                        continue
+                else:
+                    print(f"COUNTER Ingressi Range Info: Key '(Ing) Ingressi' missing in counter data for branch {branch_id} on {import_obj.import_date}")
+                    continue
+            else:
+                print(f"COUNTER Ingressi Range Warning: Unexpected counter data structure for branch {branch_id} on {import_obj.import_date}")
+                continue
+    else:
+        print(f"COUNTER Ingressi Range Warning: No counter_data imports found for branch {branch_id} between {start_date} and {end_date}")
+        return 0
+
+    return grand_total
+
 # get_traffico_esterno_single_date: Retrieves the external traffic ('(Est) Traffico Esterno') for a branch on a single date.
 # Output: int (external traffic count) or 0 if not found/invalid.
 def get_traffico_esterno_single_date(branch_id, date):

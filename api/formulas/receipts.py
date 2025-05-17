@@ -155,6 +155,53 @@ def get_total_scontrini_single_date(branch_id, date):
 
     return grand_total
 
+def get_total_scontrini_date_range(branch_id, start_date, end_date):
+    # ... (copy function code from original file) ...
+    branch = None
+    import_objs_qs = None
+
+    try:
+        branch = Branch.objects.get(id=branch_id)
+    except Branch.DoesNotExist:
+        print(f"SCONTRINI: No branch found with ID {branch_id}")
+        return 0.0
+
+    # Validate dates and create range
+    try:
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+        if start_date_obj > end_date_obj:
+            print("SCONTRINI Error: Start date cannot be after end date.")
+            return {}
+    except ValueError:
+        print("SCONTRINI Error: Date format error. Please use YYYY-MM-DD.")
+        return {}
+
+    try:
+        import_objs_qs = Import.objects.filter(import_date__range=(start_date, end_date), branch=branch, import_type="sales_data")
+    except Exception as e: # Catch potential database errors
+        print(f"SCONTRINI Error fetching imports for branch {branch_id} range {start_date}-{end_date}: {e}")
+        return 0.0
+
+    grand_total = 0.0 # Initialize as float
+
+    if import_objs_qs.exists():
+        for import_obj in import_objs_qs:
+            data = import_obj.data
+            if not isinstance(data, list):
+                 print(f"SCONTRINI Warning: Import data for {import_obj.import_date} branch {branch.id} is not a list.")
+                 continue
+
+            for employee_data in data:
+                sco_value = employee_data.get('Sco.')
+                if sco_value is not None:
+                    try:
+                        grand_total += float(sco_value)
+                    except (ValueError, TypeError):
+                        print(f"SCONTRINI Warning: Invalid 'Sco.' value '{sco_value}' skipped in total calculation for branch {branch_id} on {import_obj.import_date}")
+
+    return int(grand_total)
+
 # generate_branch_report_scontrini: Generates a report of total daily receipts ('Sco.') for a branch over a date range.
 # Output: dict { "YYYY-MM-DD": total_receipts_float, ... } sorted by date. Returns empty dict if error or no data.
 def generate_branch_report_scontrini(branch_id, start_date, end_date):
