@@ -175,7 +175,7 @@ def rollback_schedule(request, schedule_id):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 @csrf_exempt
-def delete_schedules(request):
+def delete_schedules(request, branch_id):
     if request.method == 'DELETE':
         deleted_ids = []
         errors = []
@@ -221,31 +221,23 @@ def delete_schedules(request):
                     "id": schedule_id,
                     "error": f"An unexpected error occurred: {str(e)}"
                 })
+        schedules = Schedule.objects.filter(branch_id=branch_id)
+        schedule_list = []
+        for schedule in schedules:
+            schedule_list.append({
+                "id": schedule.id,
+                "name": schedule.title,
+                "startDate": schedule.start_date,
+                "endDate": schedule.end_date,
+                "lastUpdate": "asdasdasd",
+                "state": schedule.state,  # 0 = Da verificare, 1 = Confermato, 2 = Passato
+            })
 
         response_data = {
-            "deleted_ids": deleted_ids,
-            "errors": errors
+            'schedules': schedule_list,
         }
 
-        # Determine appropriate status code
-        # 200 OK: If all operations were successful OR if some were successful and some failed (client can check body)
-        # 207 Multi-Status: More semantically correct if there's a mix, but 200 is often simpler for clients.
-        # 404 Not Found: Only if ALL requested IDs were not found and NO other errors occurred.
-        # 400 Bad Request: If the input itself was malformed (e.g., non-integer IDs if that's a strict rule).
-
-        status_code = 200 # Default to 200 OK
-        if not deleted_ids and errors:
-            if all(err.get("error") == "Schedule not found" for err in errors):
-                # If everything failed and all were "not found", 404 might be suitable.
-                # However, for a batch operation, returning 200 with details is often preferred
-                # to avoid masking that the *request itself* was processed.
-                # Let's stick with 200 and let the client parse the body.
-                pass
-            # elif any other type of error occurred, 200 is still fine with details in body.
-            # Or you could use 500 if there were server-side errors for some items.
-            # For simplicity, we'll generally stick to 200 if the request format was valid and processed.
-
-        return JsonResponse(response_data, status=status_code)
+        return JsonResponse({'status': "success", 'response': response_data}, status=200)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 

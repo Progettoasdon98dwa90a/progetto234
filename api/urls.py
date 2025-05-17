@@ -57,7 +57,7 @@ urlpatterns = [
 
     path('turni/<int:branch_id>/', get_branch_schedules, name='GET_SCHEDULES'),
     path('turni/<int:branch_id>/createSchedule/', create_new_schedule, name='CREATE_SCHEDULE'),
-    path('turni/deleteSchedules/', delete_schedules, name='DELETE_SCHEDULE'),
+    path('turni/<int:branch_id>/deleteSchedules/', delete_schedules, name='DELETE_SCHEDULE'),
     path('turni/<int:branch_id>/createSchedule/getSettings/', get_saved_settings, name='GET_SAVED_SETTINGS'),
     path('turni/backupSchedule/<int:schedule_id>/', backup_schedule, name='BACKUP_SCHEDULE'),
     path('turni/rollbackSchedule/<int:schedule_id>/', rollback_schedule, name='RESTORE_SCHEDULE'),
