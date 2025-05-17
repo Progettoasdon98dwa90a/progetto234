@@ -138,7 +138,7 @@ def confirm_schedule(request, schedule_id):
         try:
             schedule = Schedule.objects.get(id=schedule_id)
             schedule.state = 1
-            schedule.backup_to_json()
+            schedule.delete_backup()
             schedule.save()
             return JsonResponse({"success": True, 'current_state': schedule.state}, status=200)
         except Schedule.DoesNotExist:
